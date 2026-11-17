@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Scene/Character/HeroModel.gd" id="1_hero"]
+[ext_resource type="PackedScene" path="res://Asset/Heroes/KayKit/Characters/Barbarian.glb" id="2_model"]
+[ext_resource type="PackedScene" path="res://Asset/Heroes/KayKit/Items/axe_2handed.gltf" id="3_right"]
+
+[node name="character" type="Node3D"]
+script = ExtResource("1_hero")
+attack_speed_scale = 1.2
+idle_animation = "Melee_2H_Idle"
+move_animation = "Running_A"
+attack_animations = PackedStringArray("Melee_2H_Attack_Slice", "Melee_2H_Attack_Chop", "Throw")
+cast_animations = PackedStringArray("Melee_2H_Attack_Chop", "Throw")
+right_hand_item = ExtResource("3_right")
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+transform = Transform3D(-1.35, 0, 0, 0, 1.35, 0, 0, 0, -1.35, 0, 0, 0)

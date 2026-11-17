@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://sgdbf4rcfj0w" path="res://Scene/Character/CharacterData.gd" id="1_f1xa0"]
+
+[resource]
+script = ExtResource("1_f1xa0")
+id = 2
+name = "Barbarian"
+damage = 30
+attack_speed = 1.5
+movement_speed = 7
+hp = 150
+attack_range = 4
+character_scene = "res://Scene/Character/Barbarian.tscn"
+hero_avatar = "res://Asset/Heroes/Portraits/Barbarian.png"

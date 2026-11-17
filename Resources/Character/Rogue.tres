@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://sgdbf4rcfj0w" path="res://Scene/Character/CharacterData.gd" id="1_78b7s"]
+
+[resource]
+script = ExtResource("1_78b7s")
+id = 5
+name = "Rogue"
+damage = 20
+attack_speed = 1.5
+movement_speed = 15
+hp = 100
+attack_range = 10
+character_scene = "res://Scene/Character/Rogue.tscn"
+hero_avatar = "res://Asset/Heroes/Portraits/Rogue.png"

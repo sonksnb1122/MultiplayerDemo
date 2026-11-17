@@ -514,13 +514,21 @@ func facing_direction() -> Vector3:
 		return Vector3.FORWARD
 	return forward.normalized()
 
-## Length in seconds of this hero's "attack" animation
+## Name of the animation played when casting a skill: "cast" if the hero has one, else "attack"
+func cast_animation_name() -> String:
+	var ch = $character
+	if ch is Character and ch.animation_player != null and ch.animation_player.has_animation("cast"):
+		return "cast"
+	return "attack"
+
+## Length in seconds of this hero's skill-cast animation (its "attack" one if it has no "cast")
 func get_attack_animation_length() -> float:
 	var ch = $character
-	if ch is Character and ch.animation_player != null and ch.animation_player.has_animation("attack"):
+	var anim_name := cast_animation_name()
+	if ch is Character and ch.animation_player != null and ch.animation_player.has_animation(anim_name):
 		var ap: AnimationPlayer = ch.animation_player
 		var speed: float = absf(ap.speed_scale) * maxf(ch.attack_speed_scale, 0.01)
-		return ap.get_animation("attack").length / maxf(speed, 0.01)
+		return ap.get_animation(anim_name).length / maxf(speed, 0.01)
 	return 1.0
 
 ## Server: stop, face [param face_point] and play the cast animation for [param duration] seconds
@@ -536,7 +544,9 @@ func begin_cast(duration: float, face_point: Vector3) -> void:
 	cast_time_left = duration
 	velocity.x = 0
 	velocity.z = 0
-	_last_sent_anim = "attack"  # trigger_cast_animation plays "attack" on every peer
+	# trigger_cast_animation plays the cast animation on every peer; remember it so the next
+	# order ("attack", "moving"...) is sent again and restarts the right animation
+	_last_sent_anim = "cast"
 	trigger_cast_animation.rpc(peer_id)
 
 func _end_cast() -> void:
@@ -571,9 +581,9 @@ func play_basic_attack_fx(target_peer: int, travel_time: float) -> void:
 @rpc("authority", "call_local", "reliable")
 func trigger_cast_animation(object_target_peer_id: int):
 	if peer_id != object_target_peer_id: return
-	current_animation = "attack"
+	current_animation = "cast"
 	if $character is Character:
-		$character.play_animation_from_start("attack")
+		$character.play_animation_from_start(cast_animation_name())
 
 func _is_sender_owner(rpc_name: String) -> bool:
 	var sender_id := multiplayer.get_remote_sender_id()

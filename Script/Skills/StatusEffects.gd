@@ -13,8 +13,8 @@ const EMPOWER_VFX := "res://Asset/VFX/Skills/Leonidas/aura_red.tscn"
 const CC_IMMUNE_VFX := "res://Asset/VFX/Skills/Leonidas/aura_flame.tscn"
 const HASTE_VFX := "res://Asset/VFX/Skills/Leonidas/aura_blue.tscn"
 
-## Leonidas buff auras are drawn 3x as big as the original effect (particles included, see SkillVfx).
-const LEONIDAS_AURA_SCALE := 4.5
+## Knight buff auras are drawn 3x as big as the original effect (particles included, see SkillVfx).
+const KNIGHT_AURA_SCALE := 4.5
 
 ## Floating status text: starts just above the HP bar, grows, rises and fades out.
 const POPUP_START_HEIGHT := 4.9
@@ -239,9 +239,9 @@ func sync_state(new_state: Dictionary) -> void:
 	_update_visual("shield", new_state.get("shield", 0) > 0, SHIELD_VFX, 1.4, Vector3(0, 1.6, 0))
 	_update_visual("slow", new_state.get("slow", false), SLOW_VFX, 1.0, Vector3.ZERO)
 	_update_visual("dot", new_state.get("dot", false), DOT_VFX, 0.7, Vector3(0, 0.2, 0), 0.27)
-	_update_visual("empower", new_state.get("empower", 0) > 0, EMPOWER_VFX, LEONIDAS_AURA_SCALE, Vector3(0, 2.0, 0))
-	_update_visual("cc_immune", new_state.get("cc_immune", false), CC_IMMUNE_VFX, LEONIDAS_AURA_SCALE, Vector3(0, 2.0, 0))
-	_update_visual("haste", new_state.get("haste", false), HASTE_VFX, LEONIDAS_AURA_SCALE, Vector3(0, 2.0, 0))
+	_update_visual("empower", new_state.get("empower", 0) > 0, EMPOWER_VFX, KNIGHT_AURA_SCALE, Vector3(0, 2.0, 0))
+	_update_visual("cc_immune", new_state.get("cc_immune", false), CC_IMMUNE_VFX, KNIGHT_AURA_SCALE, Vector3(0, 2.0, 0))
+	_update_visual("haste", new_state.get("haste", false), HASTE_VFX, KNIGHT_AURA_SCALE, Vector3(0, 2.0, 0))
 
 	var shield: int = new_state.get("shield", 0)
 	if shield > 0 and shield < old_shield:

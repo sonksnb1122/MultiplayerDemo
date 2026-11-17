@@ -1,15 +1,14 @@
-[gd_scene load_steps=20 format=3 uid="uid://do3xfl7g1dsr8"]
+[gd_scene load_steps=22 format=3 uid="uid://do3xfl7g1dsr8"]
 
 [ext_resource type="Texture2D" uid="uid://h0wed18e2wck" path="res://Asset/Art/UI/Sprites/Common/Player_Background.jpg" id="1_8u1oh"]
 [ext_resource type="Script" uid="uid://jiliq0xlkevn" path="res://Scene/SelectHero/SelectHero.gd" id="1_ng2d0"]
 [ext_resource type="Script" uid="uid://sgdbf4rcfj0w" path="res://Scene/Character/CharacterData.gd" id="2_uwckn"]
 [ext_resource type="FontFile" uid="uid://bygv14b6v72eg" path="res://Asset/Art/UI/Fonts/RussoOne_Original.ttf" id="3_1nn6x"]
-[ext_resource type="Resource" uid="uid://d3tvfm82txhj0" path="res://Resources/Character/Leonidas.tres" id="3_akf8m"]
+[ext_resource type="Resource" path="res://Resources/Character/Knight.tres" id="3_akf8m"]
 [ext_resource type="Texture2D" uid="uid://bb7tqd5bk5jt3" path="res://Asset/Art/UI/Sprites/Common/UI_MainUI_18.png" id="4_jkp2k"]
 [ext_resource type="Texture2D" uid="uid://dqx8fwq83ff41" path="res://Asset/Art/UI/Sprites/Common/wood_bar_bg.png" id="4_md6kf"]
-[ext_resource type="Resource" uid="uid://yy0tbwdqf4gv" path="res://Resources/Character/Tesla.tres" id="4_s7f7d"]
+[ext_resource type="Resource" path="res://Resources/Character/Mage.tres" id="4_s7f7d"]
 [ext_resource type="PackedScene" uid="uid://clvjp428rfofy" path="res://Scene/GenericNodes/GenericBtn.tscn" id="5_crmic"]
-[ext_resource type="Texture2D" uid="uid://4mjuorc8k4v2" path="res://Asset/3D/Textures/ODG24R0.jpg" id="7_jkp2k"]
 [ext_resource type="Script" uid="uid://binwc0b6tgg53" path="res://Scene/SelectHero/SelectHeroNetworkManager.gd" id="12_uwckn"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_md6kf"]
@@ -33,8 +32,25 @@ texture = ExtResource("4_md6kf")
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_jpbxq"]
 
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_ground"]
+frequency = 0.02
+fractal_octaves = 4
+
+[sub_resource type="Gradient" id="Gradient_ground"]
+colors = PackedColorArray(0.36, 0.42, 0.26, 1, 0.55, 0.58, 0.36, 1)
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_ground"]
+width = 256
+height = 256
+seamless = true
+color_ramp = SubResource("Gradient_ground")
+noise = SubResource("FastNoiseLite_ground")
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1nn6x"]
-albedo_texture = ExtResource("7_jkp2k")
+albedo_texture = SubResource("NoiseTexture2D_ground")
+uv1_scale = Vector3(0.15, 0.15, 0.15)
+uv1_triplanar = true
+uv1_world_triplanar = true
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_ng2d0"]
 

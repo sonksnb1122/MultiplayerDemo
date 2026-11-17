@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://fiyojf0dw4vk" path="res://Scene/Player/PlayerHUD.gd" id="1_322da"]
 [ext_resource type="Texture2D" uid="uid://dvjimavaiexta" path="res://Asset/Art/UI/Sprites/Common/BG_Commander_Menu.png" id="3_322da"]
-[ext_resource type="Texture2D" uid="uid://c8hjevxaa06sg" path="res://Asset/Art/UI/Sprites/AvatarsProfile/Amazon_Avatar_Profile.png" id="3_miods"]
+[ext_resource type="Texture2D" path="res://Asset/Heroes/Portraits/Default.png" id="3_miods"]
 [ext_resource type="Texture2D" uid="uid://dm04x0h8xpjyo" path="res://Asset/Art/UI/Sprites/Common/pvp_lineDecorLightRed.png" id="4_ctaaj"]
 [ext_resource type="Texture2D" uid="uid://dl26mmmp320cn" path="res://Asset/Art/UI/Sprites/Common/Icon_Swords.png" id="6_wobb2"]
 [ext_resource type="FontFile" uid="uid://bygv14b6v72eg" path="res://Asset/Art/UI/Fonts/RussoOne_Original.ttf" id="7_k8g7v"]

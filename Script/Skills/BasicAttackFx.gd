@@ -6,21 +6,29 @@ extends RefCounted
 
 ## id -> look of the projectile
 const PROJECTILES := {
-	SkillDB.TESLA: {
+	SkillDB.MAGE: {
 		"color": Color(0.45, 0.8, 1.0),   # electric blue
 		"core_color": Color(0.9, 0.97, 1.0),
 		"radius": 0.28,
 		"speed": 35.0,                    # units per second
 	},
-	# Valkyrie: the arrow model painted white, longer, looks like her spear
-	SkillDB.VALKYRIE: {
+	# Ranger: an arrow from the bow
+	SkillDB.RANGER: {
 		"model": SkillDB.ARROW_MODEL,
 		"model_rotation": SkillDB.ARROW_ROTATION,
+		"model_scale": 1.3,
+		"color": Color(1.0, 0.95, 0.85),  # faint streak behind it / impact flash
+		"radius": 0.08,
+		"speed": 45.0,
+	},
+	# Rogue: a crossbow bolt
+	SkillDB.ROGUE: {
+		"model": SkillDB.CROSSBOW_BOLT_MODEL,
+		"model_rotation": SkillDB.ARROW_ROTATION,
 		"model_scale": 1.6,
-		"model_color": Color(0.95, 0.95, 0.98),
-		"color": Color(0.85, 0.9, 1.0),  # faint white streak behind it / impact flash
-		"radius": 0.12,
-		"speed": 40.0,
+		"color": Color(0.85, 1.0, 0.85),
+		"radius": 0.08,
+		"speed": 50.0,
 	},
 }
 ## Height the projectile flies at (chest of the heroes)
@@ -83,10 +91,12 @@ static func _model(look: Dictionary) -> Node3D:
 		return null
 	model.rotation_degrees = look.get("model_rotation", Vector3.ZERO)
 	model.scale = Vector3.ONE * float(look.get("model_scale", 1.0))
-	var mat := _solid_material(look.get("model_color", Color.WHITE))
+	# "model_color" paints the whole model in one color; without it the model keeps its texture
+	var mat: StandardMaterial3D = _solid_material(look["model_color"]) if look.has("model_color") else null
 	for node in model.find_children("*", "GeometryInstance3D", true, false):
 		var geo := node as GeometryInstance3D
-		geo.material_override = mat
+		if mat != null:
+			geo.material_override = mat
 		geo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return model
 

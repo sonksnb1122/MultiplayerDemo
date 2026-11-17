@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Scene/Character/HeroModel.gd" id="1_hero"]
+[ext_resource type="PackedScene" path="res://Asset/Heroes/KayKit/Characters/Ranger.glb" id="2_model"]
+[ext_resource type="PackedScene" path="res://Asset/Heroes/KayKit/Items/bow.gltf" id="4_left"]
+
+[node name="character" type="Node3D"]
+script = ExtResource("1_hero")
+attack_speed_scale = 1.6
+idle_animation = "Ranged_Bow_Idle"
+move_animation = "Running_HoldingBow"
+attack_animations = PackedStringArray("Ranged_Bow_Draw>Ranged_Bow_Release", "Ranged_Bow_Release", "Throw")
+left_hand_item = ExtResource("4_left")
+left_hand_item_rotation = Vector3(0, 0, 180)
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+transform = Transform3D(-1.35, 0, 0, 0, 1.35, 0, 0, 0, -1.35, 0, 0, 0)

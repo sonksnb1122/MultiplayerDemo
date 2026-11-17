@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://dphsax2wdi75"]
 
 [ext_resource type="Script" uid="uid://csnyvhvhkjgw" path="res://Scene/SelectHero/HeroSelectButton.gd" id="1_qmcyk"]
-[ext_resource type="Texture2D" uid="uid://c8hjevxaa06sg" path="res://Asset/Art/UI/Sprites/AvatarsProfile/Amazon_Avatar_Profile.png" id="1_r7r17"]
+[ext_resource type="Texture2D" path="res://Asset/Heroes/Portraits/Default.png" id="1_r7r17"]
 [ext_resource type="Texture2D" uid="uid://sl743jgmoj2i" path="res://Asset/Art/UI/Sprites/Frames/BPpvp_FrameBanner.png" id="2_qmcyk"]
 [ext_resource type="PackedScene" uid="uid://disp508ssb4by" path="res://Scene/GenericNodes/GenericLabel.tscn" id="4_erh75"]
 

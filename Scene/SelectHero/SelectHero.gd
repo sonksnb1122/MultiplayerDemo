@@ -99,6 +99,8 @@ func add_heroes_button()-> void:
 
 func _process(_delta: float) -> void:
 	if _preview_path.is_empty() or not AssetPreloader.is_ready(_preview_path): return
+	for anim_path in HeroModel.animation_paths():
+		if not AssetPreloader.is_ready(anim_path): return
 	var hero_model_scene := AssetPreloader.get_scene(_preview_path)
 	_preview_path = ""
 	if hero_model_scene == null: return
@@ -153,7 +155,7 @@ func _on_hero_change(hero_btn: Node) -> void:
 		selected_hero_btn = hero_btn			
 		# Only this hero's model is loaded, on a background thread: _process shows it when ready
 		_preview_path = selected_hero_btn.character_data.character_scene
-		AssetPreloader.start([_preview_path])
+		AssetPreloader.start([_preview_path] + HeroModel.animation_paths())
 		lock_btn.visible = true
 		
 		select_hero_network_manager.set_selection_status.rpc_id(GameDefines.HOST_ID, selected_hero_btn.character_data.id, false)

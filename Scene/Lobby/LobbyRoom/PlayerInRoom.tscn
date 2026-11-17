@@ -3,7 +3,7 @@
 [ext_resource type="StyleBox" uid="uid://3nkenvtcwuhn" path="res://Resources/GUI/PanelBackground.tres" id="1_00ofn"]
 [ext_resource type="Script" uid="uid://cieahf6wvr5bl" path="res://Scene/Lobby/LobbyRoom/PlayerInRoom.gd" id="1_b74wh"]
 [ext_resource type="PackedScene" uid="uid://disp508ssb4by" path="res://Scene/GenericNodes/GenericLabel.tscn" id="1_wnpr4"]
-[ext_resource type="Texture2D" uid="uid://bf1dvabakiymj" path="res://Asset/Art/UI/Sprites/AvatarsProfile/Default_Avatar_Profile.png" id="3_r7jcg"]
+[ext_resource type="Texture2D" path="res://Asset/Heroes/Portraits/Default.png" id="3_r7jcg"]
 [ext_resource type="Texture2D" uid="uid://bim7eukgqk7km" path="res://Asset/Art/UI/Sprites/Common/icon_hud_dailyReward_check.png" id="3_xmvdg"]
 [ext_resource type="Texture2D" uid="uid://cp8vgjvt6kpg0" path="res://Asset/Art/UI/Sprites/Common/btn_close.png" id="4_dhwh6"]
 

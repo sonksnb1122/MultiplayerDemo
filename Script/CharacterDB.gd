@@ -30,6 +30,8 @@ func paths_for_heroes(hero_ids: Array) -> Array:
 		_add_path(paths, str(basic.get("model", "")))
 	for p in AssetPreloader.scene_paths_in([StatusEffects]):
 		_add_path(paths, p)
+	for p in HeroModel.animation_paths():  # shared KayKit animations
+		_add_path(paths, p)
 	return paths
 
 func _add_path(paths: Array, path: String) -> void:
