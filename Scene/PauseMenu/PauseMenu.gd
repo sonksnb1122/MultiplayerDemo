@@ -12,8 +12,8 @@ static var is_open := false
 ## Always-visible button in the bottom-left corner: pause icon opens the menu, play icon closes it.
 @onready var pause_button: TextureButton = $PauseButton
 
-const PAUSE_ICON := preload("res://Asset/Art/UI/Sprites/Common/btn_pause.png")
-const PLAY_ICON := preload("res://Asset/Art/UI/Sprites/Common/btn_play.png")
+const PAUSE_ICON := preload("res://Asset/Art/Branding/btn_pause.png")
+const PLAY_ICON := preload("res://Asset/Art/Branding/btn_play.png")
 
 
 func _ready() -> void:

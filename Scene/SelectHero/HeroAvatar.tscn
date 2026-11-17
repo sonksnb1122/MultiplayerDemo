@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bofqclj4443ns" path="res://Scene/SelectHero/HeroAvatar.gd" id="1_500i0"]
 [ext_resource type="Texture2D" path="res://Asset/Heroes/Portraits/Default.png" id="2_500i0"]
-[ext_resource type="Texture2D" uid="uid://sl743jgmoj2i" path="res://Asset/Art/UI/Sprites/Frames/BPpvp_FrameBanner.png" id="2_jlgxg"]
+[ext_resource type="Texture2D" path="res://Asset/Art/UI/Generated/frame_gold.png" id="2_jlgxg"]
 
 [node name="HeroAvatar" type="Control" unique_id=1224085939]
 custom_minimum_size = Vector2(50, 50)

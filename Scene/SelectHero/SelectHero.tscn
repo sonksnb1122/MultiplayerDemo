@@ -1,12 +1,12 @@
 [gd_scene load_steps=22 format=3 uid="uid://do3xfl7g1dsr8"]
 
-[ext_resource type="Texture2D" uid="uid://h0wed18e2wck" path="res://Asset/Art/UI/Sprites/Common/Player_Background.jpg" id="1_8u1oh"]
+[ext_resource type="Texture2D" path="res://Asset/Art/Branding/Background.jpg" id="1_8u1oh"]
 [ext_resource type="Script" uid="uid://jiliq0xlkevn" path="res://Scene/SelectHero/SelectHero.gd" id="1_ng2d0"]
 [ext_resource type="Script" uid="uid://sgdbf4rcfj0w" path="res://Scene/Character/CharacterData.gd" id="2_uwckn"]
 [ext_resource type="FontFile" uid="uid://bygv14b6v72eg" path="res://Asset/Art/UI/Fonts/RussoOne_Original.ttf" id="3_1nn6x"]
 [ext_resource type="Resource" path="res://Resources/Character/Knight.tres" id="3_akf8m"]
-[ext_resource type="Texture2D" uid="uid://bb7tqd5bk5jt3" path="res://Asset/Art/UI/Sprites/Common/UI_MainUI_18.png" id="4_jkp2k"]
-[ext_resource type="Texture2D" uid="uid://dqx8fwq83ff41" path="res://Asset/Art/UI/Sprites/Common/wood_bar_bg.png" id="4_md6kf"]
+[ext_resource type="Texture2D" path="res://Asset/Art/UI/Generated/panel_dark.png" id="4_jkp2k"]
+[ext_resource type="Texture2D" path="res://Asset/Art/UI/Generated/panel_dark.png" id="4_md6kf"]
 [ext_resource type="Resource" path="res://Resources/Character/Mage.tres" id="4_s7f7d"]
 [ext_resource type="PackedScene" uid="uid://clvjp428rfofy" path="res://Scene/GenericNodes/GenericBtn.tscn" id="5_crmic"]
 [ext_resource type="Script" uid="uid://binwc0b6tgg53" path="res://Scene/SelectHero/SelectHeroNetworkManager.gd" id="12_uwckn"]
@@ -26,9 +26,17 @@ glow_enabled = true
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_1nn6x"]
 texture = ExtResource("4_jkp2k")
+texture_margin_left = 16.0
+texture_margin_top = 16.0
+texture_margin_right = 16.0
+texture_margin_bottom = 16.0
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ng2d0"]
 texture = ExtResource("4_md6kf")
+texture_margin_left = 16.0
+texture_margin_top = 16.0
+texture_margin_right = 16.0
+texture_margin_bottom = 16.0
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_jpbxq"]
 

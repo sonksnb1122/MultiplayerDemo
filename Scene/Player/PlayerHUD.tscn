@@ -1,12 +1,12 @@
 [gd_scene load_steps=10 format=3 uid="uid://olvslgv8wict"]
 
 [ext_resource type="Script" uid="uid://fiyojf0dw4vk" path="res://Scene/Player/PlayerHUD.gd" id="1_322da"]
-[ext_resource type="Texture2D" uid="uid://dvjimavaiexta" path="res://Asset/Art/UI/Sprites/Common/BG_Commander_Menu.png" id="3_322da"]
+[ext_resource type="Texture2D" path="res://Asset/Art/UI/Generated/panel_dark.png" id="3_322da"]
 [ext_resource type="Texture2D" path="res://Asset/Heroes/Portraits/Default.png" id="3_miods"]
-[ext_resource type="Texture2D" uid="uid://dm04x0h8xpjyo" path="res://Asset/Art/UI/Sprites/Common/pvp_lineDecorLightRed.png" id="4_ctaaj"]
-[ext_resource type="Texture2D" uid="uid://dl26mmmp320cn" path="res://Asset/Art/UI/Sprites/Common/Icon_Swords.png" id="6_wobb2"]
+[ext_resource type="Texture2D" path="res://Asset/Art/UI/Generated/bar_red.png" id="4_ctaaj"]
+[ext_resource type="Texture2D" path="res://Asset/Art/UI/Generated/icon_swords.png" id="6_wobb2"]
 [ext_resource type="FontFile" uid="uid://bygv14b6v72eg" path="res://Asset/Art/UI/Fonts/RussoOne_Original.ttf" id="7_k8g7v"]
-[ext_resource type="Texture2D" uid="uid://jbfixgh2mapx" path="res://Asset/Art/UI/Sprites/Common/stats-icon-boot.png" id="7_miods"]
+[ext_resource type="Texture2D" path="res://Asset/Art/UI/Generated/icon_boot.png" id="7_miods"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_sctna"]
 texture = ExtResource("6_wobb2")
@@ -58,7 +58,7 @@ theme_override_constants/margin_top = 30
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="TextureRect" type="TextureRect" parent="Control/BoxContainer/MarginContainer/Control" unique_id=470177027]
+[node name="TextureRect" type="NinePatchRect" parent="Control/BoxContainer/MarginContainer/Control" unique_id=470177027]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -66,7 +66,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("3_322da")
-expand_mode = 1
+patch_margin_left = 16
+patch_margin_top = 16
+patch_margin_right = 16
+patch_margin_bottom = 16
 
 [node name="hp_bar" type="TextureProgressBar" parent="Control/BoxContainer/MarginContainer/Control" unique_id=94803672]
 custom_minimum_size = Vector2(0, 15)
@@ -78,6 +81,10 @@ grow_horizontal = 2
 max_value = 110.0
 value = 55.0
 nine_patch_stretch = true
+stretch_margin_left = 6
+stretch_margin_top = 6
+stretch_margin_right = 6
+stretch_margin_bottom = 6
 texture_progress = ExtResource("4_ctaaj")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="Control/BoxContainer/MarginContainer/Control" unique_id=1761902495]

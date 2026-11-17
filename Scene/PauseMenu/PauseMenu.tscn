@@ -7,8 +7,8 @@
 [ext_resource type="StyleBox" uid="uid://dr45bgoisb13b" path="res://Resources/GUI/BlueButtonPressed.tres" id="5_blue_pressed"]
 [ext_resource type="StyleBox" uid="uid://bmic23ln30jmq" path="res://Resources/GUI/RedButtonNormal.tres" id="6_red"]
 [ext_resource type="StyleBox" uid="uid://dwd0ucj0jl2vi" path="res://Resources/GUI/RedButtonPressed.tres" id="7_red_pressed"]
-[ext_resource type="Texture2D" path="res://Asset/Art/UI/Sprites/Common/btn_pause.png" id="8_pause_icon"]
-[ext_resource type="Texture2D" path="res://Asset/Art/UI/Sprites/Common/btn_play.png" id="9_play_icon"]
+[ext_resource type="Texture2D" path="res://Asset/Art/Branding/btn_pause.png" id="8_pause_icon"]
+[ext_resource type="Texture2D" path="res://Asset/Art/Branding/btn_play.png" id="9_play_icon"]
 
 [node name="PauseMenu" type="CanvasLayer"]
 layer = 20

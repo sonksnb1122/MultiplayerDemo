@@ -1,6 +1,10 @@
 [gd_resource type="StyleBoxTexture" load_steps=2 format=3 uid="uid://0c2e5d2iws6b"]
 
-[ext_resource type="Texture2D" uid="uid://ikx0xwemg2yp" path="res://Asset/Art/UI/Sprites/Common/bar_green.png" id="1_j4a00"]
+[ext_resource type="Texture2D" path="res://Asset/Art/UI/Generated/bar_green.png" id="1_tex"]
 
 [resource]
-texture = ExtResource("1_j4a00")
+texture = ExtResource("1_tex")
+texture_margin_left = 6.0
+texture_margin_top = 6.0
+texture_margin_right = 6.0
+texture_margin_bottom = 6.0

@@ -1,6 +1,10 @@
 [gd_resource type="StyleBoxTexture" load_steps=2 format=3 uid="uid://dqv0nr6ksi55f"]
 
-[ext_resource type="Texture2D" uid="uid://m5qpqjked0d1" path="res://Asset/Art/UI/Sprites/Buttons/Btn_orange_pressed.png" id="1_x53fu"]
+[ext_resource type="Texture2D" path="res://Asset/Art/UI/Kenney/button_yellow_pressed.png" id="1_tex"]
 
 [resource]
-texture = ExtResource("1_x53fu")
+texture = ExtResource("1_tex")
+texture_margin_left = 16.0
+texture_margin_top = 16.0
+texture_margin_right = 16.0
+texture_margin_bottom = 16.0
