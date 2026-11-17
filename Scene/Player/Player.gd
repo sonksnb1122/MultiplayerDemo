@@ -49,6 +49,14 @@ func _ready() -> void:
 	
 	if multiplayer.is_server(): 
 		target_attack = Object.new()
+	
+	# FIX: connect the respawn timer once here instead of on every death.
+	# RespawnTimer has autostart = true in Player.tscn, so stop it now;
+	# otherwise it would fire right after spawn and trigger a respawn.
+	respawn_timer.stop()
+	respawn_timer.one_shot = true
+	respawn_timer.timeout.connect(_on_timer_respawn_timeout)
+	
 	on_ready.rpc_id(GameDefines.HOST_ID, peer_id)
 
 func _enter_tree() -> void:
@@ -207,12 +215,13 @@ func handle_player_dead():
 	print("handle_player_dead")
 	player_state = PlayerState.WAITING_FOR_RESPAWN
 	respawn_timer.wait_time = GameDefines.COOL_DOWN_FOR_RESPAWN_AFTER_DEAD
-	respawn_timer.timeout.connect(_on_timer_respawn_timeout)
 	respawn_timer.start()
 	
 func _on_timer_respawn_timeout():
 	print("_on_timer_respawn_timeout")
 	if not multiplayer.is_server(): return
+	# FIX: only respawn a hero that is actually waiting for respawn
+	if player_state != PlayerState.WAITING_FOR_RESPAWN: return
 	respawn_timer.stop()
 	player_state = PlayerState.IDLE
 	trigger_respawn.rpc(peer_id, spawn_position, character_data.hp)

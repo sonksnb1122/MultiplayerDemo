@@ -15,6 +15,10 @@ var remaining_time_to_start := GameDefines.COOL_DOWN_START_GAME
 func _ready() -> void:
 	NetworkManager.player_leaved.connect(_on_player_leave)
 	NetworkManager.server_disconnected.connect(_on_server_disconnected)
+	
+	# FIX: connect timers once here instead of inside try_start_game() / try_start_select()
+	start_game_timer.timeout.connect(send_start_remaining_time)
+	select_timer.timeout.connect(send_select_remaining_time)
 
 func init_hero_select():
 	on_start_selecting.rpc_id(GameDefines.HOST_ID, multiplayer.get_unique_id())
@@ -86,7 +90,6 @@ func try_start_game() -> bool:
 	show_count_down.rpc(remaining_time_to_start)
 	start_game_timer.wait_time = 1
 	start_game_timer.one_shot = false
-	start_game_timer.timeout.connect(send_start_remaining_time)
 	start_game_timer.start()
 	
 	return true
@@ -108,7 +111,6 @@ func try_start_select() -> bool:
 	show_count_down.rpc(remaining_time_to_start)
 	select_timer.wait_time = 1
 	select_timer.one_shot = false
-	select_timer.timeout.connect(send_select_remaining_time)
 	select_timer.start()
 	
 	return true

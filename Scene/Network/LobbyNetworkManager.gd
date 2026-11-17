@@ -18,6 +18,9 @@ func _ready() -> void:
 	# Signal for boths
 	NetworkManager.player_leaved.connect(_on_player_leaved)
 	NetworkManager.server_disconnected.connect(_on_server_disconnected)
+	
+	# FIX: connect once here instead of every time try_start_game() runs
+	timer.timeout.connect(send_remaining_time)
 
 func _on_new_player_joined(peer_id: int, player_name: String):
 	# Only handle new player in server side
@@ -105,7 +108,6 @@ func try_start_game() -> bool:
 	show_cool_down.rpc(remaining_time_to_start)
 	timer.wait_time = 1
 	timer.one_shot = false
-	timer.timeout.connect(send_remaining_time)
 	timer.start()
 
 	return true
