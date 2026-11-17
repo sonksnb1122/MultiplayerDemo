@@ -284,13 +284,15 @@ func on_ready(object_peer_id: int):
 @rpc("any_peer", "call_local", "unreliable_ordered")
 func position_clicked(mouse_position: Vector3):
 	if not multiplayer.is_server(): return
+	if not _is_sender_owner("position_clicked"): return
 	player_state = PlayerState.MOVING
 	target_position = mouse_position
 	
 @rpc("any_peer", "call_local", "unreliable_ordered")
 func hero_clicked(peer_id_object_clicked: int):
 	if not multiplayer.is_server(): return
-	
+	if not _is_sender_owner("hero_clicked"): return
+
 	var hero_is_clicked: Object = null
 	if get_parent() is HeroSpawner:
 		hero_is_clicked = get_parent().get_player(peer_id_object_clicked)
@@ -306,6 +308,13 @@ func hero_clicked(peer_id_object_clicked: int):
 	else:
 		target_position = hero_is_clicked.position
 		player_state = PlayerState.MOVING
+
+func _is_sender_owner(rpc_name: String) -> bool:
+	var sender_id := multiplayer.get_remote_sender_id()
+	if sender_id != peer_id:
+		push_warning("%s rejected: peer %d tried to control hero of peer %d" % [rpc_name, sender_id, peer_id])
+		return false
+	return true
 
 func show_take_damage_label(dmg: int):
 	var label = dmg_label.instantiate()
