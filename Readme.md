@@ -1,8 +1,11 @@
 *** Quick note
+
 You can enjoy the game with your friends on the same local network
 Or test multiple instances of the game yourself on your device
 
 Notice: Can't host two rooms in one device because game using one PORT for broadcast and host SERVER
+
+Video demo: https://drive.google.com/drive/folders/1mk7uXzu9hSir7_E0g8zvv80J2QTOuzMQ?usp=drive_link
 
 *** HOW TO BUILD THE GAME
 
