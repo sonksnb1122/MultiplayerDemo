@@ -128,7 +128,8 @@ func _on_hero_change(hero_btn: Node) -> void:
 		for child in heroes_model_container.get_children():
 			child.queue_free()
 		selected_hero_btn = hero_btn			
-		var hero_model_scene = load(selected_hero_btn.character_data.character_scene)
+		# Loaded in the background since the game started (AssetPreloader): no freeze when switching hero
+		var hero_model_scene = AssetPreloader.get_scene(selected_hero_btn.character_data.character_scene)
 		var hero_model = hero_model_scene.instantiate()	
 		heroes_model_container.add_child(hero_model)
 		hero_model.position = Vector3(0,0,0)

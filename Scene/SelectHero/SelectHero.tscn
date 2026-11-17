@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://h0wed18e2wck" path="res://Asset/Art/UI/Sprites/Common/Player_Background.jpg" id="1_8u1oh"]
 [ext_resource type="Script" uid="uid://jiliq0xlkevn" path="res://Scene/SelectHero/SelectHero.gd" id="1_ng2d0"]
-[ext_resource type="Script" uid="uid://2vei4lmx641e" path="res://Scene/Character/CharacterData.gd" id="2_uwckn"]
+[ext_resource type="Script" uid="uid://sgdbf4rcfj0w" path="res://Scene/Character/CharacterData.gd" id="2_uwckn"]
 [ext_resource type="FontFile" uid="uid://bygv14b6v72eg" path="res://Asset/Art/UI/Fonts/RussoOne_Original.ttf" id="3_1nn6x"]
 [ext_resource type="Resource" uid="uid://d3tvfm82txhj0" path="res://Resources/Character/Leonidas.tres" id="3_akf8m"]
 [ext_resource type="Texture2D" uid="uid://bb7tqd5bk5jt3" path="res://Asset/Art/UI/Sprites/Common/UI_MainUI_18.png" id="4_jkp2k"]

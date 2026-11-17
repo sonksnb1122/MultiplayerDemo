@@ -11,6 +11,8 @@ func _ready() -> void:
 	game_play_network.start_game.connect(_on_game_started)
 	game_play_network.play_time_trigged.connect(_on_play_time_trigged)
 	game_play_network.heroes_status_updated.connect(_on_heroes_status_updated)
+	# Compile the basic-attack projectile shaders now, so the first shot is visible
+	BasicAttackFx.warm_up(_get_camera())
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:

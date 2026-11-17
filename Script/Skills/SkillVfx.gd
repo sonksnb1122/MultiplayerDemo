@@ -12,7 +12,8 @@ static func load_scene(path: String) -> PackedScene:
 	if path.is_empty():
 		return null
 	if not _cache.has(path):
-		var res := load(path) as PackedScene
+		# Usually already loaded in the background (AssetPreloader)
+		var res := AssetPreloader.get_scene(path)
 		if res == null:
 			push_error("SkillVfx: can't load scene %s" % path)
 		_cache[path] = res
@@ -26,6 +27,7 @@ static func instantiate(path: String, scale_value: float, hue_shift := 0.0) -> N
 	var fx := packed.instantiate() as Node3D
 	if fx == null:
 		return null
+	_disable_shadows(fx)
 	var ember := fx as EmbersetEffect
 	if ember != null:
 		ember.size = scale_value
@@ -35,6 +37,17 @@ static func instantiate(path: String, scale_value: float, hue_shift := 0.0) -> N
 		fx.scale = Vector3.ONE * scale_value
 		_scale_aligned_particles(fx, scale_value)
 	return fx
+
+
+## Glowing VFX don't need to cast shadows: skipping them saves drawing every particle a second
+## time into the shadow map.
+static func _disable_shadows(fx: Node) -> void:
+	if fx is GeometryInstance3D:
+		(fx as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for node in fx.find_children("*", "GeometryInstance3D", true, false):
+		(node as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for node in fx.find_children("*", "Light3D", true, false):
+		(node as Light3D).shadow_enabled = false
 
 
 ## Particles with a transform_align mode rebuild their own rotation, which drops the node scale:

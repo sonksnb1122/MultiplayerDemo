@@ -54,10 +54,33 @@ var skill_caster: SkillCaster
 
 # Variable for networking
 var peer_id: int
+
+# Network sync tuning
+## Position updates per second sent by the server while a hero moves
+const POSITION_SEND_RATE := 30.0
+## The server re-sends position/direction this often even when nothing changed (covers lost packets)
+const SYNC_HEARTBEAT := 0.5
+## Client: how fast the drawn position catches up with the last received one (higher = snappier)
+const CLIENT_SMOOTHING := 18.0
+## Client: farther than this from the received position = teleport (spawn/respawn), snap instantly
+const CLIENT_SNAP_DISTANCE := 4.0
+## Server: direction changes smaller than this (degrees) are not sent
+const DIRECTION_EPSILON_DEG := 2.0
+
+# server: what was last sent, to send only changes
+var _last_sent_anim := ""
+var _last_sent_pos := Vector3.INF
+var _last_sent_dir := Vector3.ZERO
+var _pos_send_timer := 0.0
+var _heartbeat_timer := 0.0
+# client: position received from the server, drawn smoothly in _process
+var _net_target_pos := Vector3.ZERO
+var _has_net_target := false
 # ---
 
 func _ready() -> void:
 	hp_bar.max_value = float(character_data.hp)
+	_refresh_hp_bar()
 	
 	if multiplayer.is_server(): 
 		target_attack = Object.new()
@@ -73,6 +96,7 @@ func _ready() -> void:
 
 func _enter_tree() -> void:
 	global_position = spawn_position
+	_net_target_pos = spawn_position
 	camera = get_tree().get_root().get_node("GamePlay").get_node("Camera3D")
 	if NetworkManager.is_mine(peer_id):
 		if camera is CameraController:
@@ -95,7 +119,8 @@ func _on_all_player_spawned() -> void:
 	
 func set_character_data(data: CharacterData) -> void:
 	character_data = data
-	var hero_model_scene = load(character_data.character_scene)
+	# Already loaded in the background since the game started (AssetPreloader)
+	var hero_model_scene = AssetPreloader.get_scene(character_data.character_scene)
 	var hero_model = hero_model_scene.instantiate()	
 	add_child(hero_model)
 	hero_model.position = Vector3(0,0,0)
@@ -152,10 +177,17 @@ func shoot_ray_cast():
 		else:
 			position_clicked.rpc_id(GameDefines.HOST_ID, raycast_result["position"])
 
+## The hp bar is drawn in a SubViewport: render it only when it changed instead of every frame
+func _refresh_hp_bar() -> void:
+	var vp := hp_bar.get_parent() as SubViewport
+	if vp != null:
+		vp.render_target_update_mode = SubViewport.UPDATE_ONCE
+
 func set_hp_bar_texture() -> void:
 	var player_id = multiplayer.get_unique_id()
 	if peer_id == player_id: 
 		hp_bar.add_theme_stylebox_override("fill", player_hp_bar)
+		_refresh_hp_bar()
 		return
 	
 	if not get_parent() is HeroSpawner: return
@@ -168,6 +200,7 @@ func set_hp_bar_texture() -> void:
 		hp_bar.add_theme_stylebox_override("fill", enemy_hp_bar)
 	else:
 		hp_bar.add_theme_stylebox_override("fill", teammate_hp_bar)
+	_refresh_hp_bar()
 
 # --- SERVER FUNCTION ---
 
@@ -180,7 +213,7 @@ func _physics_process(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, 0, character_data.movement_speed)
 		velocity.z = move_toward(velocity.z, 0, character_data.movement_speed)
 		move_and_slide()
-		set_object_position.rpc(peer_id, global_position)
+	_sync_transform_to_clients(delta)
 		
 	if player_state == PlayerState.WAITING_FOR_RESPAWN: return
 
@@ -191,11 +224,10 @@ func _physics_process(delta: float) -> void:
 			_end_cast()
 		if not _stun_anim_sent:
 			_stun_anim_sent = true
-			trigger_animation.rpc(peer_id, "idle")
+			_send_animation("idle")
 		return
 	if _stun_anim_sent:
 		_stun_anim_sent = false
-		current_animation = ""  # make the next order replay its animation
 
 	# Casting a skill: stand still until the cast animation is done
 	if player_state == PlayerState.CASTING:
@@ -212,15 +244,15 @@ func _physics_process(delta: float) -> void:
 	elif player_state == PlayerState.ATTACK and not is_instance_valid(target_attack):
 		# The target left the game
 		player_state = PlayerState.IDLE
-		trigger_animation.rpc(peer_id, "idle")
+		_send_animation("idle")
 	elif player_state == PlayerState.ATTACK:		
 		if (target_attack.position - global_position).length() > character_data.attack_range:
-			trigger_animation.rpc(peer_id, "moving")
+			_send_animation("moving")
 			move_to_target(target_attack.position)
 		else: 
 			var lookAtVector = Vector3(target_attack.position.x, position.y, target_attack.position.z)
-			set_object_direction.rpc(peer_id, lookAtVector)
-			trigger_animation.rpc(peer_id, "attack")
+			_send_direction(lookAtVector)
+			_send_animation("attack")
 	pass
 
 func perform_attack() -> void:
@@ -231,8 +263,19 @@ func perform_attack() -> void:
 	#if attack_cooldown >= character_data.attack_speed:
 	if target_attack is Player:
 		var bonus := status.consume_empowered_attack()
-		target_attack.take_damage(character_data.damage + bonus)
+		var dmg := character_data.damage + bonus
 		attack_cooldown = 0
+		if BasicAttackFx.has_projectile(character_data.id):
+			# Ranged: show the projectile everywhere, deal the damage when it lands
+			var target: Player = target_attack
+			var dist := (target.global_position - global_position).length()
+			var travel := maxf(dist / BasicAttackFx.speed_of(character_data.id), 0.05)
+			play_basic_attack_fx.rpc(target.peer_id, travel)
+			get_tree().create_timer(travel).timeout.connect(func() -> void:
+				if is_instance_valid(target) and not target.is_dead() and not is_dead():
+					target.take_damage(dmg))
+		else:
+			target_attack.take_damage(dmg)
 
 func get_move_speed() -> float:
 	return character_data.movement_speed * status.move_speed_multiplier()
@@ -249,14 +292,55 @@ func move_to_target(target: Vector3):
 			velocity.z = move_toward(velocity.z, 0, speed)
 		if target:
 			var lookAtVector = Vector3(target.x, position.y, target.z)
-			set_object_direction.rpc(peer_id, lookAtVector)
+			_send_direction(lookAtVector)
 		
-		trigger_animation.rpc(peer_id, "moving")
+		_send_animation("moving")
 		move_and_slide()
-		set_object_position.rpc(peer_id, global_position)
 	else:
-		trigger_animation.rpc(peer_id, "idle")
+		_send_animation("idle")
 		player_state = PlayerState.IDLE
+
+# --- NETWORK SYNC (server) ---
+# Animation/direction are sent only when they change; position at POSITION_SEND_RATE on its own
+# channel, so it never waits behind reliable packets (ENet delivers each channel in order).
+
+func _send_animation(animation_name: String) -> void:
+	if _last_sent_anim == animation_name: return
+	_last_sent_anim = animation_name
+	trigger_animation.rpc(peer_id, animation_name)
+
+func _send_direction(look_point: Vector3, force := false) -> void:
+	var dir := look_point - global_position
+	dir.y = 0.0
+	if dir.length() < 0.01: return
+	dir = dir.normalized()
+	if not force and _last_sent_dir != Vector3.ZERO and _last_sent_dir.angle_to(dir) < deg_to_rad(DIRECTION_EPSILON_DEG):
+		return
+	_last_sent_dir = dir
+	set_object_direction.rpc(peer_id, look_point)
+
+func _sync_transform_to_clients(delta: float) -> void:
+	# Before the match starts the clients may not have spawned this hero yet: position travels on
+	# channel 1, so it could arrive before spawn_heros_to_tree (channel 0) -> "Node not found".
+	if not hero_spawner.is_game_started(): return
+	_pos_send_timer += delta
+	_heartbeat_timer += delta
+	var heartbeat := _heartbeat_timer >= SYNC_HEARTBEAT
+	var moved := global_position.distance_squared_to(_last_sent_pos) > 0.0001
+	if heartbeat or (moved and _pos_send_timer >= 1.0 / POSITION_SEND_RATE):
+		_pos_send_timer = 0.0
+		_heartbeat_timer = 0.0
+		_last_sent_pos = global_position
+		set_object_position.rpc(peer_id, global_position)
+		if heartbeat and _last_sent_dir != Vector3.ZERO:
+			set_object_direction.rpc(peer_id, global_position + _last_sent_dir)
+
+# --- CLIENT SMOOTHING ---
+
+func _process(delta: float) -> void:
+	if multiplayer.is_server() or not _has_net_target: return
+	var weight := 1.0 - exp(-CLIENT_SMOOTHING * delta)
+	global_position = global_position.lerp(_net_target_pos, weight)
 
 func take_damage(dmg: int) -> void:
 	if not multiplayer.is_server(): return
@@ -290,17 +374,26 @@ func _on_timer_respawn_timeout():
 	if player_state != PlayerState.WAITING_FOR_RESPAWN: return
 	respawn_timer.stop()
 	player_state = PlayerState.IDLE
+	_last_sent_anim = "idle"  # trigger_respawn plays "idle" on every peer
 	trigger_respawn.rpc(peer_id, spawn_position, character_data.hp)
 	
 # --- RPCs ----
 
 # server call to clients and/or itself
-@rpc("authority", "call_remote", "unreliable_ordered")
+# Channel 1: position/direction never wait behind the reliable RPCs on channel 0
+@rpc("authority", "call_remote", "unreliable_ordered", 1)
 func set_object_position(object_target_peer_id: int, new_position: Vector3):
 	if peer_id != object_target_peer_id: return
-	global_position = new_position
+	if multiplayer.is_server():
+		global_position = new_position
+		return
+	# Client: _process glides toward it; big jumps (spawn, respawn) snap at once
+	_net_target_pos = new_position
+	if not _has_net_target or global_position.distance_to(new_position) > CLIENT_SNAP_DISTANCE:
+		global_position = new_position
+	_has_net_target = true
 
-@rpc("authority", "call_local", "unreliable_ordered")
+@rpc("authority", "call_local", "unreliable_ordered", 1)
 func set_object_direction(object_target_peer_id: int, lookAtVector: Vector3):
 	if peer_id != object_target_peer_id: return
 	$character.look_at(lookAtVector, Vector3.UP)
@@ -309,7 +402,6 @@ func set_object_direction(object_target_peer_id: int, lookAtVector: Vector3):
 func set_current_hp(object_target_peer_id: int, damage_take: int, current_hp_after_take_dmg: int):
 	if peer_id != object_target_peer_id: return
 	
-	print("set_current_hp: " + str(current_hp_after_take_dmg))
 	# TODO: trigger animation take dmg, UI for decrease HP
 	if damage_take != 0:
 		show_take_damage_label(damage_take)
@@ -317,6 +409,7 @@ func set_current_hp(object_target_peer_id: int, damage_take: int, current_hp_aft
 		player_HUD.set_current_hp_details(current_hp_after_take_dmg)
 	current_hp = current_hp_after_take_dmg
 	hp_bar.value = current_hp
+	_refresh_hp_bar()
 	if current_hp <= 0:
 		handle_player_dead()
 
@@ -326,7 +419,6 @@ func trigger_animation(object_target_peer_id: int, animation_name: String):
 	
 	if current_animation == animation_name: return
 	current_animation = animation_name
-	print("trigger_animation: " + animation_name + " PEER_ID: " + str(multiplayer.get_remote_sender_id()))
 	if $character is Character:
 		$character.play_animation(animation_name)	
 	
@@ -352,9 +444,19 @@ func on_ready(object_peer_id: int):
 	print("hero ready on peer: " + str(peer_id_sender))
 	if peer_id != object_peer_id: return
 	
-	# Update position, hp for the sender
-	set_object_position.rpc_id(peer_id_sender, peer_id, spawn_position)
-	set_current_hp.rpc_id(peer_id_sender, peer_id, 0, character_data.hp)
+	# The host's own copy: already at the right position (and set_object_position is call_remote,
+	# so sending it to ourselves is an error), it only needs its hp bar filled
+	if peer_id_sender == multiplayer.get_unique_id():
+		set_current_hp(peer_id, 0, current_hp)
+		return
+	
+	# Send the current position, hp, direction and animation to the sender
+	set_object_position.rpc_id(peer_id_sender, peer_id, global_position)
+	set_current_hp.rpc_id(peer_id_sender, peer_id, 0, current_hp)
+	if _last_sent_dir != Vector3.ZERO:
+		set_object_direction.rpc_id(peer_id_sender, peer_id, global_position + _last_sent_dir)
+	if _last_sent_anim != "":
+		trigger_animation.rpc_id(peer_id_sender, peer_id, _last_sent_anim)
 	
 @rpc("any_peer", "call_local", "unreliable_ordered")
 func position_clicked(mouse_position: Vector3):
@@ -426,7 +528,7 @@ func begin_cast(duration: float, face_point: Vector3) -> void:
 	if not multiplayer.is_server(): return
 	var look := Vector3(face_point.x, position.y, face_point.z)
 	if (look - position).length() > 0.1:
-		set_object_direction.rpc(peer_id, look)
+		_send_direction(look, true)
 	if duration <= 0.0: return
 	if player_state != PlayerState.CASTING:
 		state_before_cast = player_state
@@ -434,6 +536,7 @@ func begin_cast(duration: float, face_point: Vector3) -> void:
 	cast_time_left = duration
 	velocity.x = 0
 	velocity.z = 0
+	_last_sent_anim = "attack"  # trigger_cast_animation plays "attack" on every peer
 	trigger_cast_animation.rpc(peer_id)
 
 func _end_cast() -> void:
@@ -446,7 +549,24 @@ func _end_cast() -> void:
 		next = PlayerState.IDLE
 	player_state = next
 	if next == PlayerState.IDLE:
-		trigger_animation.rpc(peer_id, "idle")
+		_send_animation("idle")
+
+## Visual only: the basic-attack projectile of a ranged hero (damage is applied by the server)
+@rpc("authority", "call_local", "reliable")
+func play_basic_attack_fx(target_peer: int, travel_time: float) -> void:
+	if not (hero_spawner is HeroSpawner): return
+	var target := hero_spawner.get_player(target_peer) as Node3D
+	var world := get_tree().current_scene
+	if target == null or world == null: return
+	var start := global_position + facing_direction() * BasicAttackFx.FORWARD_OFFSET + Vector3(0, BasicAttackFx.HEIGHT, 0)
+	var projectile := BasicAttackFx.create(character_data.id, start, target, travel_time)
+	if projectile == null: return
+	world.add_child(projectile)
+	projectile.global_position = start
+	var hero_id := character_data.id
+	get_tree().create_timer(travel_time).timeout.connect(func() -> void:
+		if is_instance_valid(target) and is_instance_valid(world):
+			BasicAttackFx.spawn_impact(world, target.global_position + Vector3(0, BasicAttackFx.HEIGHT, 0), hero_id))
 
 @rpc("authority", "call_local", "reliable")
 func trigger_cast_animation(object_target_peer_id: int):
