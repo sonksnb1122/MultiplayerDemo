@@ -13,7 +13,15 @@ enum PlayerState{
 	MOVING,
 	ATTACK,
 	WAITING_FOR_RESPAWN,
+	CASTING,
 }
+
+# Skills (server)
+var cast_time_left := 0.0
+## Bumped when a cast is interrupted (stun, death): delayed skill effects check it and cancel
+var cast_serial := 0
+var state_before_cast = PlayerState.IDLE
+var _stun_anim_sent := false
 
 @onready var respawn_timer: Timer = $RespawnTimer
 
@@ -39,6 +47,10 @@ var teammate_hp_bar = preload("res://Resources/GUI/TeamMateHPBar.tres")
 var enemy_hp_bar = preload("res://Resources/GUI/EnemyHPBar.tres")
 
 var player_HUD: PlayerHUD
+
+# Skill components, created in set_character_data() with the same name on every peer
+var status: StatusEffects
+var skill_caster: SkillCaster
 
 # Variable for networking
 var peer_id: int
@@ -88,6 +100,14 @@ func set_character_data(data: CharacterData) -> void:
 	add_child(hero_model)
 	hero_model.position = Vector3(0,0,0)
 
+	# Skill system: same node names on every peer so their RPCs reach each other
+	status = StatusEffects.new()
+	status.name = "StatusEffects"
+	add_child(status)
+	skill_caster = SkillCaster.new()
+	skill_caster.name = "SkillCaster"
+	add_child(skill_caster)
+
 func init(hero_team_info: Dictionary):
 	spawn_position = GameDefines.LEFT_TEAM_SPAWN_POSITION
 	
@@ -107,8 +127,8 @@ func _input(event: InputEvent) -> void:
 		if event.is_action("Moving"):
 			shoot_ray_cast()
 
-func shoot_ray_cast():
-	#using ray cast to detect position cursor point at
+## Raycast from the mouse cursor into the world. Returns {} or {"collider", "position", ...}.
+func mouse_raycast(exclude_self := false) -> Dictionary:
 	var mouse_pos = get_viewport().get_mouse_position()
 	var ray_length = 1000
 	var from = camera.project_ray_origin(mouse_pos)
@@ -117,7 +137,13 @@ func shoot_ray_cast():
 	var query = PhysicsRayQueryParameters3D.new()
 	query.from = from
 	query.to = to
-	var raycast_result =  space.intersect_ray(query)
+	if exclude_self:
+		query.exclude = [get_rid()]
+	return space.intersect_ray(query)
+
+func shoot_ray_cast():
+	#using ray cast to detect position cursor point at
+	var raycast_result = mouse_raycast()
 	if !raycast_result.is_empty():
 		var coll = raycast_result.get("collider")
 		if coll is Player:
@@ -157,6 +183,26 @@ func _physics_process(delta: float) -> void:
 		
 	if player_state == PlayerState.WAITING_FOR_RESPAWN: return
 
+	# Stunned: stand still, keep the current order for when the stun ends
+	if status.is_stunned():
+		if player_state == PlayerState.CASTING:
+			cast_serial += 1
+			_end_cast()
+		if not _stun_anim_sent:
+			_stun_anim_sent = true
+			trigger_animation.rpc(peer_id, "idle")
+		return
+	if _stun_anim_sent:
+		_stun_anim_sent = false
+		current_animation = ""  # make the next order replay its animation
+
+	# Casting a skill: stand still until the cast animation is done
+	if player_state == PlayerState.CASTING:
+		cast_time_left -= delta
+		if cast_time_left <= 0.0:
+			_end_cast()
+		return
+
 	# move player to target position
 	if attack_cooldown < character_data.attack_speed:
 		attack_cooldown += delta
@@ -174,20 +220,27 @@ func _physics_process(delta: float) -> void:
 
 func perform_attack() -> void:
 	if not multiplayer.is_server(): return
+	# The "attack" animation is also used to cast skills: only a real basic attack deals damage
+	if player_state != PlayerState.ATTACK or status.is_stunned(): return
 	#if attack_cooldown >= character_data.attack_speed:
-	if target_attack is Player: 
-		target_attack.take_damage(character_data.damage)
+	if target_attack is Player:
+		var bonus := status.consume_empowered_attack()
+		target_attack.take_damage(character_data.damage + bonus)
 		attack_cooldown = 0
-	
+
+func get_move_speed() -> float:
+	return character_data.movement_speed * status.move_speed_multiplier()
+
 func move_to_target(target: Vector3):
 	var direction = (target - global_transform.origin).normalized()
+	var speed = get_move_speed()
 	if (target - global_position).length() > GameDefines.STOP_DISTANCE:
 		if direction:
-			velocity.x = direction.x * character_data.movement_speed
-			velocity.z = direction.z * character_data.movement_speed
+			velocity.x = direction.x * speed
+			velocity.z = direction.z * speed
 		else:
-			velocity.x = move_toward(velocity.x, 0, character_data.movement_speed)
-			velocity.z = move_toward(velocity.z, 0, character_data.movement_speed)
+			velocity.x = move_toward(velocity.x, 0, speed)
+			velocity.z = move_toward(velocity.z, 0, speed)
 		if target:
 			var lookAtVector = Vector3(target.x, position.y, target.z)
 			set_object_direction.rpc(peer_id, lookAtVector)
@@ -201,6 +254,10 @@ func move_to_target(target: Vector3):
 
 func take_damage(dmg: int) -> void:
 	if not multiplayer.is_server(): return
+	if is_dead(): return
+	# Shield (Bubble Shock) absorbs first
+	dmg = status.absorb_damage(dmg)
+	if dmg <= 0: return
 	current_hp -= dmg
 	if current_hp <= 0:
 		# recaculate extractly dame taken
@@ -214,6 +271,9 @@ func handle_player_dead():
 	
 	print("handle_player_dead")
 	player_state = PlayerState.WAITING_FOR_RESPAWN
+	cast_time_left = 0.0
+	cast_serial += 1
+	status.clear_all()
 	respawn_timer.wait_time = GameDefines.COOL_DOWN_FOR_RESPAWN_AFTER_DEAD
 	respawn_timer.start()
 	
@@ -294,13 +354,15 @@ func on_ready(object_peer_id: int):
 func position_clicked(mouse_position: Vector3):
 	if not multiplayer.is_server(): return
 	if not _is_sender_owner("position_clicked"): return
-	player_state = PlayerState.MOVING
+	if is_dead(): return
 	target_position = mouse_position
+	_set_order(PlayerState.MOVING)
 	
 @rpc("any_peer", "call_local", "unreliable_ordered")
 func hero_clicked(peer_id_object_clicked: int):
 	if not multiplayer.is_server(): return
 	if not _is_sender_owner("hero_clicked"): return
+	if is_dead(): return
 
 	var hero_is_clicked: Object = null
 	if get_parent() is HeroSpawner:
@@ -313,10 +375,79 @@ func hero_clicked(peer_id_object_clicked: int):
 		target_attack = hero_is_clicked
 		target_position = hero_is_clicked.position
 
-		player_state = PlayerState.ATTACK
+		_set_order(PlayerState.ATTACK)
 	else:
 		target_position = hero_is_clicked.position
-		player_state = PlayerState.MOVING
+		_set_order(PlayerState.MOVING)
+
+# A new move/attack order given while a skill is being cast runs once the cast ends
+func _set_order(new_state) -> void:
+	if player_state == PlayerState.CASTING:
+		state_before_cast = new_state
+	else:
+		player_state = new_state
+
+# --- SKILL HELPERS ---
+
+func is_dead() -> bool:
+	return player_state == PlayerState.WAITING_FOR_RESPAWN or current_hp <= 0
+
+func is_enemy(other) -> bool:
+	return other is Player and other != self and other.team_side != team_side
+
+func can_cast() -> bool:
+	return not is_dead() and player_state != PlayerState.CASTING and not status.is_stunned()
+
+## Direction the hero model faces (the model looks along -Z after look_at)
+func facing_direction() -> Vector3:
+	var forward: Vector3 = -$character.global_transform.basis.z
+	forward.y = 0.0
+	if forward.length() < 0.01:
+		return Vector3.FORWARD
+	return forward.normalized()
+
+## Length in seconds of this hero's "attack" animation
+func get_attack_animation_length() -> float:
+	var ch = $character
+	if ch is Character and ch.animation_player != null and ch.animation_player.has_animation("attack"):
+		var ap: AnimationPlayer = ch.animation_player
+		var speed: float = absf(ap.speed_scale) * maxf(ch.attack_speed_scale, 0.01)
+		return ap.get_animation("attack").length / maxf(speed, 0.01)
+	return 1.0
+
+## Server: stop, face [param face_point] and play the cast animation for [param duration] seconds
+func begin_cast(duration: float, face_point: Vector3) -> void:
+	if not multiplayer.is_server(): return
+	var look := Vector3(face_point.x, position.y, face_point.z)
+	if (look - position).length() > 0.1:
+		set_object_direction.rpc(peer_id, look)
+	if duration <= 0.0: return
+	if player_state != PlayerState.CASTING:
+		state_before_cast = player_state
+	player_state = PlayerState.CASTING
+	cast_time_left = duration
+	velocity.x = 0
+	velocity.z = 0
+	trigger_cast_animation.rpc(peer_id)
+
+func _end_cast() -> void:
+	cast_time_left = 0.0
+	var next = state_before_cast
+	state_before_cast = PlayerState.IDLE
+	if next == PlayerState.ATTACK and not (target_attack is Player and not target_attack.is_dead()):
+		next = PlayerState.IDLE
+	if next != PlayerState.MOVING and next != PlayerState.ATTACK:
+		next = PlayerState.IDLE
+	player_state = next
+	if next == PlayerState.IDLE:
+		trigger_animation.rpc(peer_id, "idle")
+
+@rpc("authority", "call_local", "reliable")
+func trigger_cast_animation(object_target_peer_id: int):
+	if peer_id != object_target_peer_id: return
+	current_animation = "attack"
+	if $character is Character:
+		$character.play_animation_from_start("attack")
 
 func _is_sender_owner(rpc_name: String) -> bool:
 	var sender_id := multiplayer.get_remote_sender_id()
