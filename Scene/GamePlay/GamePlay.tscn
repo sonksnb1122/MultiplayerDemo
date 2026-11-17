@@ -1,0 +1,71 @@
+[gd_scene load_steps=13 format=3 uid="uid://c4pr3l4xm610g"]
+
+[ext_resource type="Script" uid="uid://735ioghm2fcf" path="res://Scene/GamePlay/GamePlay.gd" id="1_uxwnf"]
+[ext_resource type="Texture2D" uid="uid://4mjuorc8k4v2" path="res://Asset/3D/Textures/ODG24R0.jpg" id="2_7ypr8"]
+[ext_resource type="Script" uid="uid://c20ycpblytupe" path="res://Scene/GamePlay/Camera.gd" id="4_cyt15"]
+[ext_resource type="PackedScene" uid="uid://c4al6q0fqx1d6" path="res://Scene/GamePlay/GamePlayHUD.tscn" id="6_wbgh5"]
+[ext_resource type="Script" uid="uid://cmgsalalbiluj" path="res://Scene/GamePlay/HeroSpawner.gd" id="7_bc2dv"]
+[ext_resource type="Script" uid="uid://3kld0greicae" path="res://Scene/GamePlay/GamePlayNetwork.gd" id="8_5ivyy"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_hxmeu"]
+sky_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
+ground_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
+
+[sub_resource type="Sky" id="Sky_7ypr8"]
+sky_material = SubResource("ProceduralSkyMaterial_hxmeu")
+
+[sub_resource type="Environment" id="Environment_uxwnf"]
+background_mode = 2
+sky = SubResource("Sky_7ypr8")
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="BoxMesh" id="BoxMesh_uxwnf"]
+size = Vector3(4, 1, 4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hxmeu"]
+albedo_color = Color(0.882238, 0.798846, 0.705671, 1)
+albedo_texture = ExtResource("2_7ypr8")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_cyt15"]
+size = Vector3(4, 0, 4)
+
+[node name="GamePlay" type="Node3D" unique_id=894692585]
+script = ExtResource("1_uxwnf")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=228063691]
+transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 36.5653, 30.6569, 0)
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1106443691]
+environment = SubResource("Environment_uxwnf")
+
+[node name="Area" type="StaticBody3D" parent="." unique_id=1570116926]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Area" unique_id=481420886]
+transform = Transform3D(50, 0, 0, 0, 50, 0, 0, 0, 50, 0, -25.2132, 0)
+mesh = SubResource("BoxMesh_uxwnf")
+skeleton = NodePath("../..")
+surface_material_override/0 = SubResource("StandardMaterial3D_hxmeu")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area" unique_id=357097539]
+transform = Transform3D(50, 0, 0, 0, 50, 0, 0, 0, 50, 0, 0, 0)
+shape = SubResource("BoxShape3D_cyt15")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=201207895]
+transform = Transform3D(1, 0, 0, 0, 0.7071068, 0.7071068, 0, -0.7071068, 0.7071068, -42.010612, 30, 0.043589592)
+script = ExtResource("4_cyt15")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1494342682]
+
+[node name="PlayerHud" parent="CanvasLayer" unique_id=989025897 instance=ExtResource("6_wbgh5")]
+mouse_filter = 2
+mouse_force_pass_scroll_events = false
+
+[node name="HeroSpawner" type="Node" parent="." unique_id=667222061]
+script = ExtResource("7_bc2dv")
+
+[node name="GamePlayNetwork" type="Node" parent="." unique_id=1696041310]
+script = ExtResource("8_5ivyy")
+
+[node name="PlayTimer" type="Timer" parent="GamePlayNetwork" unique_id=684964625]

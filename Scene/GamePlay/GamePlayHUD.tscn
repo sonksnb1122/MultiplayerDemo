@@ -1,0 +1,71 @@
+[gd_scene load_steps=3 format=3 uid="uid://c4al6q0fqx1d6"]
+
+[ext_resource type="Script" uid="uid://cseh37g1j5byw" path="res://Scene/GamePlay/GamePlayHUD.gd" id="1_herkh"]
+[ext_resource type="FontFile" uid="uid://bygv14b6v72eg" path="res://Asset/Art/UI/Fonts/RussoOne_Original.ttf" id="2_drgyk"]
+
+[node name="PlayerHud" type="Control" unique_id=1370111952]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_herkh")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1515482799]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="Control" type="Control" parent="MarginContainer" unique_id=339862743]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/Control" unique_id=1838333179]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 50.0
+grow_horizontal = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Label2" type="Label" parent="MarginContainer/Control/HBoxContainer" unique_id=235412460]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(1, 0.696433, 0.29904, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("2_drgyk")
+theme_override_font_sizes/font_size = 30
+text = "The Light"
+
+[node name="PlayerList" type="HBoxContainer" parent="MarginContainer/Control/HBoxContainer" unique_id=1856492860]
+custom_minimum_size = Vector2(210, 0)
+layout_mode = 2
+
+[node name="TimerLabel" type="Label" parent="MarginContainer/Control/HBoxContainer" unique_id=1169324728]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_drgyk")
+theme_override_font_sizes/font_size = 30
+text = "00:30"
+
+[node name="BossList" type="HBoxContainer" parent="MarginContainer/Control/HBoxContainer" unique_id=1147319048]
+custom_minimum_size = Vector2(210, 0)
+layout_direction = 3
+layout_mode = 2
+
+[node name="Label3" type="Label" parent="MarginContainer/Control/HBoxContainer" unique_id=837935962]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.919596, 0.629269, 0.907405, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("2_drgyk")
+theme_override_font_sizes/font_size = 30
+text = "The Dark"

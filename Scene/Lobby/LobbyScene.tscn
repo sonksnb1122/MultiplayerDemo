@@ -1,0 +1,172 @@
+[gd_scene load_steps=11 format=3 uid="uid://q4w5sdohvw4f"]
+
+[ext_resource type="Script" uid="uid://h70ljvm7ye6x" path="res://Scene/Lobby/LobbyManager.gd" id="1_y24gm"]
+[ext_resource type="PackedScene" uid="uid://disp508ssb4by" path="res://Scene/GenericNodes/GenericLabel.tscn" id="2_bxvww"]
+[ext_resource type="PackedScene" uid="uid://clvjp428rfofy" path="res://Scene/GenericNodes/GenericBtn.tscn" id="3_j0nb2"]
+[ext_resource type="StyleBox" uid="uid://b5jjd87fq4y7" path="res://Resources/GUI/BlueButtonNormal.tres" id="4_j0nb2"]
+[ext_resource type="PackedScene" uid="uid://ce1lyvcau1wvg" path="res://Scene/Lobby/LobbyRoom/LobbyRoomScene.tscn" id="4_w52yf"]
+[ext_resource type="StyleBox" uid="uid://dr45bgoisb13b" path="res://Resources/GUI/BlueButtonPressed.tres" id="5_235kb"]
+[ext_resource type="StyleBox" uid="uid://c6xs3vb8vqlid" path="res://Resources/GUI/YellowButtonNormal.tres" id="6_vown0"]
+[ext_resource type="StyleBox" uid="uid://dqv0nr6ksi55f" path="res://Resources/GUI/YellowButtonPressed.tres" id="7_y5jjo"]
+[ext_resource type="StyleBox" uid="uid://dabdphmml88o5" path="res://Resources/GUI/BackButtonNormal.tres" id="8_swx8d"]
+[ext_resource type="StyleBox" uid="uid://cj57sldybbc1j" path="res://Resources/GUI/BackButtonPressed.tres" id="9_uloje"]
+
+[node name="LobbyScene" type="Control" unique_id=1976690642]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_y24gm")
+
+[node name="LobbyHub" type="MarginContainer" parent="." unique_id=1850539089]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_top = 100
+theme_override_constants/margin_bottom = 100
+
+[node name="Panel" type="Panel" parent="LobbyHub" unique_id=324973874]
+layout_mode = 2
+
+[node name="LobbyAndRoom" type="HBoxContainer" parent="LobbyHub/Panel" unique_id=2118419916]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Lobby" type="VBoxContainer" parent="LobbyHub/Panel/LobbyAndRoom" unique_id=1844513645]
+custom_minimum_size = Vector2(210, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LobbyLabel" parent="LobbyHub/Panel/LobbyAndRoom/Lobby" unique_id=1699527170 instance=ExtResource("2_bxvww")]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 50
+text = "LOBBY"
+vertical_alignment = 1
+
+[node name="HostBtn" parent="LobbyHub/Panel/LobbyAndRoom/Lobby" unique_id=430877203 instance=ExtResource("3_j0nb2")]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+theme_override_styles/normal = ExtResource("4_j0nb2")
+theme_override_styles/pressed = ExtResource("5_235kb")
+theme_override_styles/hover = ExtResource("4_j0nb2")
+text = "Host"
+
+[node name="QuickMatchBtn" parent="LobbyHub/Panel/LobbyAndRoom/Lobby" unique_id=687494622 instance=ExtResource("3_j0nb2")]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "Quick match"
+
+[node name="JoinGameBtn" parent="LobbyHub/Panel/LobbyAndRoom/Lobby" unique_id=643456709 instance=ExtResource("3_j0nb2")]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+theme_override_styles/normal = ExtResource("6_vown0")
+theme_override_styles/pressed = ExtResource("7_y5jjo")
+theme_override_styles/hover = ExtResource("6_vown0")
+text = "Join game"
+
+[node name="SettingBtn" parent="LobbyHub/Panel/LobbyAndRoom/Lobby" unique_id=226325269 instance=ExtResource("3_j0nb2")]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "Settings"
+
+[node name="RoomListTab" type="VBoxContainer" parent="LobbyHub/Panel/LobbyAndRoom" unique_id=746097394]
+custom_minimum_size = Vector2(700, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LobbyLabel" parent="LobbyHub/Panel/LobbyAndRoom/RoomListTab" unique_id=1644310051 instance=ExtResource("2_bxvww")]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 50
+text = "ROOM LIST"
+vertical_alignment = 1
+
+[node name="Labels" type="HBoxContainer" parent="LobbyHub/Panel/LobbyAndRoom/RoomListTab" unique_id=1278080538]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="RoomNameLb" parent="LobbyHub/Panel/LobbyAndRoom/RoomListTab/Labels" unique_id=889334357 instance=ExtResource("2_bxvww")]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "Room Name"
+vertical_alignment = 1
+
+[node name="HostLb" parent="LobbyHub/Panel/LobbyAndRoom/RoomListTab/Labels" unique_id=793134075 instance=ExtResource("2_bxvww")]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "Host"
+vertical_alignment = 1
+
+[node name="PlayersLb" parent="LobbyHub/Panel/LobbyAndRoom/RoomListTab/Labels" unique_id=1016136081 instance=ExtResource("2_bxvww")]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "Players"
+vertical_alignment = 1
+
+[node name="PingLb" parent="LobbyHub/Panel/LobbyAndRoom/RoomListTab/Labels" unique_id=319025822 instance=ExtResource("2_bxvww")]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "Ping"
+vertical_alignment = 1
+
+[node name="StatusLb" parent="LobbyHub/Panel/LobbyAndRoom/RoomListTab/Labels" unique_id=12428324 instance=ExtResource("2_bxvww")]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "Status"
+vertical_alignment = 1
+
+[node name="LockLb" parent="LobbyHub/Panel/LobbyAndRoom/RoomListTab/Labels" unique_id=290225573 instance=ExtResource("2_bxvww")]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "Lock"
+vertical_alignment = 1
+
+[node name="RoomList" type="ScrollContainer" parent="LobbyHub/Panel/LobbyAndRoom/RoomListTab" unique_id=1156655073]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="List" type="VBoxContainer" parent="LobbyHub/Panel/LobbyAndRoom/RoomListTab/RoomList" unique_id=1843869404]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="BackBtn" parent="." unique_id=303206166 instance=ExtResource("3_j0nb2")]
+layout_mode = 0
+offset_right = 94.0
+offset_bottom = 70.0
+theme_override_styles/normal = ExtResource("8_swx8d")
+theme_override_styles/pressed = ExtResource("9_uloje")
+theme_override_styles/hover = ExtResource("8_swx8d")
+text = ""
+
+[node name="RoomScene" parent="." unique_id=621761742 instance=ExtResource("4_w52yf")]
+visible = false
+layout_mode = 1
+
+[connection signal="pressed" from="LobbyHub/Panel/LobbyAndRoom/Lobby/HostBtn" to="." method="_on_host_btn_pressed"]
+[connection signal="pressed" from="LobbyHub/Panel/LobbyAndRoom/Lobby/QuickMatchBtn" to="." method="_on_quick_match_btn_pressed"]
+[connection signal="pressed" from="LobbyHub/Panel/LobbyAndRoom/Lobby/JoinGameBtn" to="." method="_on_join_game_btn_pressed"]
+[connection signal="pressed" from="LobbyHub/Panel/LobbyAndRoom/Lobby/SettingBtn" to="." method="_on_setting_btn_pressed"]
+[connection signal="pressed" from="BackBtn" to="." method="_on_back_btn_pressed"]
+[connection signal="return_to_lobby" from="RoomScene" to="." method="_on_room_scene_return_to_lobby"]

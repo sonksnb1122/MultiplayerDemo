@@ -1,0 +1,156 @@
+[gd_scene load_steps=9 format=3 uid="uid://ce1lyvcau1wvg"]
+
+[ext_resource type="Script" uid="uid://bb8xu40yqy614" path="res://Scene/Lobby/LobbyRoom/LobbyRoomManager.gd" id="1_jmcrc"]
+[ext_resource type="StyleBox" uid="uid://3nkenvtcwuhn" path="res://Resources/GUI/PanelBackground.tres" id="2_833gi"]
+[ext_resource type="PackedScene" uid="uid://clvjp428rfofy" path="res://Scene/GenericNodes/GenericBtn.tscn" id="2_atbmc"]
+[ext_resource type="PackedScene" uid="uid://disp508ssb4by" path="res://Scene/GenericNodes/GenericLabel.tscn" id="3_wq37c"]
+[ext_resource type="StyleBox" uid="uid://bmic23ln30jmq" path="res://Resources/GUI/RedButtonNormal.tres" id="5_eu4rw"]
+[ext_resource type="StyleBox" uid="uid://dwd0ucj0jl2vi" path="res://Resources/GUI/RedButtonPressed.tres" id="6_82xfc"]
+[ext_resource type="StyleBox" uid="uid://dabdphmml88o5" path="res://Resources/GUI/BackButtonNormal.tres" id="7_1j8p5"]
+[ext_resource type="StyleBox" uid="uid://cj57sldybbc1j" path="res://Resources/GUI/BackButtonPressed.tres" id="8_n5fy2"]
+
+[node name="RoomScene" type="Control" unique_id=621761742]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_jmcrc")
+
+[node name="RoomHub" type="MarginContainer" parent="." unique_id=1980555533]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_top = 100
+theme_override_constants/margin_bottom = 100
+
+[node name="Panel" type="Panel" parent="RoomHub" unique_id=912546189]
+layout_mode = 2
+theme_override_styles/panel = ExtResource("2_833gi")
+
+[node name="LobbyAndRoom" type="HBoxContainer" parent="RoomHub/Panel" unique_id=1355465843]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Lobby" type="VBoxContainer" parent="RoomHub/Panel/LobbyAndRoom" unique_id=1599521899]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LobbyLabel" parent="RoomHub/Panel/LobbyAndRoom/Lobby" unique_id=446213473 instance=ExtResource("3_wq37c")]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "LOBBY"
+vertical_alignment = 1
+
+[node name="InviteBtn" parent="RoomHub/Panel/LobbyAndRoom/Lobby" unique_id=17567920 instance=ExtResource("2_atbmc")]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "Invite Players"
+
+[node name="CopyBtn" parent="RoomHub/Panel/LobbyAndRoom/Lobby" unique_id=1955733138 instance=ExtResource("2_atbmc")]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "Copy Link"
+
+[node name="RollBtn" parent="RoomHub/Panel/LobbyAndRoom/Lobby" unique_id=220806999 instance=ExtResource("2_atbmc")]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "Roll Players"
+
+[node name="SettingBtn" parent="RoomHub/Panel/LobbyAndRoom/Lobby" unique_id=847344655 instance=ExtResource("2_atbmc")]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "Settings"
+
+[node name="RoomList" type="VBoxContainer" parent="RoomHub/Panel/LobbyAndRoom" unique_id=86044404]
+custom_minimum_size = Vector2(600, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LobbyLabel" parent="RoomHub/Panel/LobbyAndRoom/RoomList" unique_id=916574248 instance=ExtResource("3_wq37c")]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "ROOM NAME"
+vertical_alignment = 1
+
+[node name="Labels" type="HBoxContainer" parent="RoomHub/Panel/LobbyAndRoom/RoomList" unique_id=164733794]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+
+[node name="PlayerLb" parent="RoomHub/Panel/LobbyAndRoom/RoomList/Labels" unique_id=878309417 instance=ExtResource("3_wq37c")]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Player"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="BossLb" parent="RoomHub/Panel/LobbyAndRoom/RoomList/Labels" unique_id=459240893 instance=ExtResource("3_wq37c")]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Boss"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="Players" type="HBoxContainer" parent="RoomHub/Panel/LobbyAndRoom/RoomList" unique_id=881442630]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+
+[node name="PlayerHub" type="ScrollContainer" parent="RoomHub/Panel/LobbyAndRoom/RoomList/Players" unique_id=243037177]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PlayersCtn" type="VBoxContainer" parent="RoomHub/Panel/LobbyAndRoom/RoomList/Players/PlayerHub" unique_id=1623145264]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BossHub" type="ScrollContainer" parent="RoomHub/Panel/LobbyAndRoom/RoomList/Players" unique_id=1179521369]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BossCtn" type="VBoxContainer" parent="RoomHub/Panel/LobbyAndRoom/RoomList/Players/BossHub" unique_id=299277424]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StartBtn" parent="RoomHub/Panel/LobbyAndRoom/RoomList" unique_id=961165984 instance=ExtResource("2_atbmc")]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+theme_override_styles/normal = ExtResource("5_eu4rw")
+theme_override_styles/pressed = ExtResource("6_82xfc")
+theme_override_styles/hover = ExtResource("5_eu4rw")
+text = "Start"
+
+[node name="BackBtn" parent="." unique_id=711127220 instance=ExtResource("2_atbmc")]
+layout_mode = 1
+offset_right = 119.0
+offset_bottom = 70.0
+theme_override_styles/normal = ExtResource("7_1j8p5")
+theme_override_styles/pressed = ExtResource("8_n5fy2")
+theme_override_styles/hover = ExtResource("7_1j8p5")
+text = ""
+
+[node name="StartingLabel" parent="." unique_id=915016489 instance=ExtResource("3_wq37c")]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -31.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Starting in..."
+
+[connection signal="pressed" from="RoomHub/Panel/LobbyAndRoom/Lobby/InviteBtn" to="." method="_on_invite_btn_pressed"]
+[connection signal="pressed" from="RoomHub/Panel/LobbyAndRoom/Lobby/CopyBtn" to="." method="_on_copy_btn_pressed"]
+[connection signal="pressed" from="RoomHub/Panel/LobbyAndRoom/RoomList/StartBtn" to="." method="_on_start_or_ready_btn_pressed"]
+[connection signal="pressed" from="BackBtn" to="." method="_on_back_btn_pressed"]

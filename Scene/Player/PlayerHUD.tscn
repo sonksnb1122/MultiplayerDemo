@@ -1,0 +1,124 @@
+[gd_scene load_steps=10 format=3 uid="uid://olvslgv8wict"]
+
+[ext_resource type="Script" uid="uid://fiyojf0dw4vk" path="res://Scene/Player/PlayerHUD.gd" id="1_322da"]
+[ext_resource type="Texture2D" uid="uid://dvjimavaiexta" path="res://Asset/Art/UI/Sprites/Common/BG_Commander_Menu.png" id="3_322da"]
+[ext_resource type="Texture2D" uid="uid://c8hjevxaa06sg" path="res://Asset/Art/UI/Sprites/AvatarsProfile/Amazon_Avatar_Profile.png" id="3_miods"]
+[ext_resource type="Texture2D" uid="uid://dm04x0h8xpjyo" path="res://Asset/Art/UI/Sprites/Common/pvp_lineDecorLightRed.png" id="4_ctaaj"]
+[ext_resource type="Texture2D" uid="uid://dl26mmmp320cn" path="res://Asset/Art/UI/Sprites/Common/Icon_Swords.png" id="6_wobb2"]
+[ext_resource type="FontFile" uid="uid://bygv14b6v72eg" path="res://Asset/Art/UI/Fonts/RussoOne_Original.ttf" id="7_k8g7v"]
+[ext_resource type="Texture2D" uid="uid://jbfixgh2mapx" path="res://Asset/Art/UI/Sprites/Common/stats-icon-boot.png" id="7_miods"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_sctna"]
+texture = ExtResource("6_wobb2")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_1yjkl"]
+texture = ExtResource("7_miods")
+
+[node name="player_details" type="Control" unique_id=2056110734]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_322da")
+
+[node name="Control" type="Control" parent="." unique_id=1067046699]
+custom_minimum_size = Vector2(300, 100)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -40.0
+offset_right = 20.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="BoxContainer" type="BoxContainer" parent="Control" unique_id=1608296303]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="avatar" type="TextureRect" parent="Control/BoxContainer" unique_id=984789035]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+texture = ExtResource("3_miods")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="MarginContainer" type="MarginContainer" parent="Control/BoxContainer" unique_id=1004657541]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_override_constants/margin_top = 30
+
+[node name="Control" type="Control" parent="Control/BoxContainer/MarginContainer" unique_id=2031964038]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TextureRect" type="TextureRect" parent="Control/BoxContainer/MarginContainer/Control" unique_id=470177027]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_322da")
+expand_mode = 1
+
+[node name="hp_bar" type="TextureProgressBar" parent="Control/BoxContainer/MarginContainer/Control" unique_id=94803672]
+custom_minimum_size = Vector2(0, 15)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 29.0
+grow_horizontal = 2
+max_value = 110.0
+value = 55.0
+nine_patch_stretch = true
+texture_progress = ExtResource("4_ctaaj")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Control/BoxContainer/MarginContainer/Control" unique_id=1761902495]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Panel" type="Panel" parent="Control/BoxContainer/MarginContainer/Control/HBoxContainer" unique_id=1702062725]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_sctna")
+
+[node name="damage_label" type="Label" parent="Control/BoxContainer/MarginContainer/Control/HBoxContainer" unique_id=1204572788]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("7_k8g7v")
+text = "201"
+
+[node name="Panel2" type="Panel" parent="Control/BoxContainer/MarginContainer/Control/HBoxContainer" unique_id=1608568149]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_1yjkl")
+
+[node name="speed_label" type="Label" parent="Control/BoxContainer/MarginContainer/Control/HBoxContainer" unique_id=419818328]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("7_k8g7v")
+text = "20"
+
+[node name="MarginContainer" type="MarginContainer" parent="Control/BoxContainer/MarginContainer/Control" unique_id=166526552]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 23.0
+grow_horizontal = 2
+theme_override_constants/margin_left = 10
+
+[node name="name_label" type="Label" parent="Control/BoxContainer/MarginContainer/Control/MarginContainer" unique_id=1992830571]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("7_k8g7v")
+text = "Leo"

@@ -1,0 +1,70 @@
+[gd_scene load_steps=6 format=3 uid="uid://bilrbhvpu85po"]
+
+[ext_resource type="StyleBox" uid="uid://b5jjd87fq4y7" path="res://Resources/GUI/BlueButtonNormal.tres" id="1_0adbx"]
+[ext_resource type="Script" uid="uid://csfs2fvm33ulo" path="res://Scene/Lobby/Room.gd" id="1_lo8y5"]
+[ext_resource type="PackedScene" uid="uid://disp508ssb4by" path="res://Scene/GenericNodes/GenericLabel.tscn" id="2_a2b4b"]
+[ext_resource type="StyleBox" uid="uid://dr45bgoisb13b" path="res://Resources/GUI/BlueButtonPressed.tres" id="2_m1v7o"]
+[ext_resource type="StyleBox" uid="uid://c6xs3vb8vqlid" path="res://Resources/GUI/YellowButtonNormal.tres" id="3_m1v7o"]
+
+[node name="RoomBtn" type="Button" unique_id=1529368123]
+custom_minimum_size = Vector2(700, 70)
+offset_right = 8.0
+offset_bottom = 70.0
+theme_override_styles/normal = ExtResource("1_0adbx")
+theme_override_styles/pressed = ExtResource("2_m1v7o")
+theme_override_styles/hover = ExtResource("3_m1v7o")
+script = ExtResource("1_lo8y5")
+
+[node name="RoomInfo" type="HBoxContainer" parent="." unique_id=966520609]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RoomNameLb" parent="RoomInfo" unique_id=1385732791 instance=ExtResource("2_a2b4b")]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "rad"
+vertical_alignment = 1
+
+[node name="HostLb" parent="RoomInfo" unique_id=804852357 instance=ExtResource("2_a2b4b")]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "rad"
+vertical_alignment = 1
+
+[node name="PlayersLb" parent="RoomInfo" unique_id=386437151 instance=ExtResource("2_a2b4b")]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "rad"
+vertical_alignment = 1
+
+[node name="PingLb" parent="RoomInfo" unique_id=1952390400 instance=ExtResource("2_a2b4b")]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "rad"
+vertical_alignment = 1
+
+[node name="StatusLb" parent="RoomInfo" unique_id=547489307 instance=ExtResource("2_a2b4b")]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "rad"
+vertical_alignment = 1
+
+[node name="LockLb" parent="RoomInfo" unique_id=915764620 instance=ExtResource("2_a2b4b")]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "no"
+vertical_alignment = 1
+
+[connection signal="pressed" from="." to="." method="_on_pressed"]

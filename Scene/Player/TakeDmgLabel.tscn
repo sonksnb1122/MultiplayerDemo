@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3 uid="uid://cl35tqfge3jne"]
+
+[ext_resource type="FontFile" uid="uid://bygv14b6v72eg" path="res://Asset/Art/UI/Fonts/RussoOne_Original.ttf" id="1_8h3f6"]
+[ext_resource type="Script" uid="uid://jqijyw31r2s1" path="res://Scene/Player/DamageLabel.gd" id="1_8he30"]
+
+[node name="TakeDmgLabel" type="Node3D" unique_id=1750321465]
+script = ExtResource("1_8he30")
+
+[node name="Timer" type="Timer" parent="." unique_id=769993345]
+wait_time = 0.5
+one_shot = true
+autostart = true
+
+[node name="Label3D" type="Label3D" parent="." unique_id=1885398353]
+billboard = 1
+modulate = Color(1, 0.18431373, 0.31764707, 1)
+text = "-20"
+font = ExtResource("1_8h3f6")
+font_size = 300
+outline_size = 50
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

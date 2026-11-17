@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://disp508ssb4by"]
+
+[ext_resource type="FontFile" uid="uid://bygv14b6v72eg" path="res://Asset/Art/UI/Fonts/RussoOne_Original.ttf" id="1_q18i4"]
+
+[node name="Label" type="Label" unique_id=1724418845]
+theme_override_fonts/font = ExtResource("1_q18i4")
+theme_override_font_sizes/font_size = 25
+text = "Generic label"
+horizontal_alignment = 1

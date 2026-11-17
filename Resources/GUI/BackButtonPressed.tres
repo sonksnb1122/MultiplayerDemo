@@ -1,0 +1,7 @@
+[gd_resource type="StyleBoxTexture" load_steps=2 format=3 uid="uid://cj57sldybbc1j"]
+
+[ext_resource type="Texture2D" uid="uid://bhuqb1xjafvu8" path="res://Asset/Art/UI/Sprites/Buttons/btn_back.png" id="1_fioud"]
+
+[resource]
+texture = ExtResource("1_fioud")
+modulate_color = Color(0.7666196, 0.76661956, 0.76661956, 1)

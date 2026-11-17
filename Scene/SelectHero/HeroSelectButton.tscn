@@ -1,0 +1,78 @@
+[gd_scene load_steps=6 format=3 uid="uid://dphsax2wdi75"]
+
+[ext_resource type="Script" uid="uid://csnyvhvhkjgw" path="res://Scene/SelectHero/HeroSelectButton.gd" id="1_qmcyk"]
+[ext_resource type="Texture2D" uid="uid://c8hjevxaa06sg" path="res://Asset/Art/UI/Sprites/AvatarsProfile/Amazon_Avatar_Profile.png" id="1_r7r17"]
+[ext_resource type="Texture2D" uid="uid://sl743jgmoj2i" path="res://Asset/Art/UI/Sprites/Frames/BPpvp_FrameBanner.png" id="2_qmcyk"]
+[ext_resource type="PackedScene" uid="uid://disp508ssb4by" path="res://Scene/GenericNodes/GenericLabel.tscn" id="4_erh75"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_r7r17"]
+
+[node name="HeroAvatar" type="Control" unique_id=332998304]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 3
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -50.0
+offset_bottom = 50.0
+grow_horizontal = 2
+script = ExtResource("1_qmcyk")
+
+[node name="Control" type="Control" parent="." unique_id=248300168]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Avatar" type="TextureRect" parent="Control" unique_id=603149707]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -25.0
+offset_right = 25.0
+offset_bottom = 50.0
+grow_horizontal = 2
+texture = ExtResource("1_r7r17")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TextureRect2" type="TextureRect" parent="Control" unique_id=1689937012]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -25.0
+offset_right = 25.0
+offset_bottom = 50.0
+grow_horizontal = 2
+texture = ExtResource("2_qmcyk")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="LockedLabel" parent="Control" unique_id=745937114 instance=ExtResource("4_erh75")]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 10
+text = "Locked in"
+vertical_alignment = 1
+
+[node name="Button" type="Button" parent="." unique_id=495594364]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/normal = SubResource("StyleBoxTexture_r7r17")
+
+[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]

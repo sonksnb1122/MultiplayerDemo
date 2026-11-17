@@ -1,0 +1,77 @@
+[gd_scene load_steps=10 format=3 uid="uid://b41mqa20q70ir"]
+
+[ext_resource type="StyleBox" uid="uid://3nkenvtcwuhn" path="res://Resources/GUI/PanelBackground.tres" id="1_00ofn"]
+[ext_resource type="Script" uid="uid://cieahf6wvr5bl" path="res://Scene/Lobby/LobbyRoom/PlayerInRoom.gd" id="1_b74wh"]
+[ext_resource type="PackedScene" uid="uid://disp508ssb4by" path="res://Scene/GenericNodes/GenericLabel.tscn" id="1_wnpr4"]
+[ext_resource type="Texture2D" uid="uid://bf1dvabakiymj" path="res://Asset/Art/UI/Sprites/AvatarsProfile/Default_Avatar_Profile.png" id="3_r7jcg"]
+[ext_resource type="Texture2D" uid="uid://bim7eukgqk7km" path="res://Asset/Art/UI/Sprites/Common/icon_hud_dailyReward_check.png" id="3_xmvdg"]
+[ext_resource type="Texture2D" uid="uid://cp8vgjvt6kpg0" path="res://Asset/Art/UI/Sprites/Common/btn_close.png" id="4_dhwh6"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_fwh1s"]
+texture = ExtResource("3_r7jcg")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_dhwh6"]
+texture = ExtResource("3_xmvdg")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_00ofn"]
+texture = ExtResource("4_dhwh6")
+
+[node name="Player" type="Panel" unique_id=2003773574]
+custom_minimum_size = Vector2(200, 70)
+theme_override_styles/panel = ExtResource("1_00ofn")
+script = ExtResource("1_b74wh")
+
+[node name="Ctn" type="HBoxContainer" parent="." unique_id=623581694]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Avatar" type="Panel" parent="Ctn" unique_id=696550263]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxTexture_fwh1s")
+
+[node name="Name" parent="Ctn" unique_id=1564264574 instance=ExtResource("1_wnpr4")]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "Rad Name"
+horizontal_alignment = 0
+
+[node name="Status" type="Control" parent="Ctn" unique_id=1814737969]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Ready" type="Panel" parent="Ctn/Status" unique_id=702460664]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -5.0
+offset_top = -10.0
+offset_right = 5.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_dhwh6")
+
+[node name="Idle" type="Panel" parent="Ctn/Status" unique_id=1918056576]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -5.0
+offset_top = -10.0
+offset_right = 5.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_00ofn")

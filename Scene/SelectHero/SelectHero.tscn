@@ -1,0 +1,231 @@
+[gd_scene load_steps=20 format=3 uid="uid://do3xfl7g1dsr8"]
+
+[ext_resource type="Texture2D" uid="uid://h0wed18e2wck" path="res://Asset/Art/UI/Sprites/Common/Player_Background.jpg" id="1_8u1oh"]
+[ext_resource type="Script" uid="uid://jiliq0xlkevn" path="res://Scene/SelectHero/SelectHero.gd" id="1_ng2d0"]
+[ext_resource type="Script" uid="uid://2vei4lmx641e" path="res://Scene/Character/CharacterData.gd" id="2_uwckn"]
+[ext_resource type="FontFile" uid="uid://bygv14b6v72eg" path="res://Asset/Art/UI/Fonts/RussoOne_Original.ttf" id="3_1nn6x"]
+[ext_resource type="Resource" uid="uid://d3tvfm82txhj0" path="res://Resources/Character/Leonidas.tres" id="3_akf8m"]
+[ext_resource type="Texture2D" uid="uid://bb7tqd5bk5jt3" path="res://Asset/Art/UI/Sprites/Common/UI_MainUI_18.png" id="4_jkp2k"]
+[ext_resource type="Texture2D" uid="uid://dqx8fwq83ff41" path="res://Asset/Art/UI/Sprites/Common/wood_bar_bg.png" id="4_md6kf"]
+[ext_resource type="Resource" uid="uid://yy0tbwdqf4gv" path="res://Resources/Character/Tesla.tres" id="4_s7f7d"]
+[ext_resource type="PackedScene" uid="uid://clvjp428rfofy" path="res://Scene/GenericNodes/GenericBtn.tscn" id="5_crmic"]
+[ext_resource type="Texture2D" uid="uid://4mjuorc8k4v2" path="res://Asset/3D/Textures/ODG24R0.jpg" id="7_jkp2k"]
+[ext_resource type="Script" uid="uid://binwc0b6tgg53" path="res://Scene/SelectHero/SelectHeroNetworkManager.gd" id="12_uwckn"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_md6kf"]
+sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+
+[sub_resource type="Sky" id="Sky_jkp2k"]
+sky_material = SubResource("ProceduralSkyMaterial_md6kf")
+
+[sub_resource type="Environment" id="Environment_1nn6x"]
+background_mode = 2
+sky = SubResource("Sky_jkp2k")
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_1nn6x"]
+texture = ExtResource("4_jkp2k")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ng2d0"]
+texture = ExtResource("4_md6kf")
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_jpbxq"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1nn6x"]
+albedo_texture = ExtResource("7_jkp2k")
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ng2d0"]
+
+[node name="SelectHero" type="Node3D" unique_id=585739441]
+script = ExtResource("1_ng2d0")
+list_heroes = Array[ExtResource("2_uwckn")]([ExtResource("3_akf8m"), ExtResource("4_s7f7d")])
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1666534694]
+environment = SubResource("Environment_1nn6x")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1469844749]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+shadow_enabled = true
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=98783773]
+
+[node name="Control" type="Control" parent="CanvasLayer" unique_id=667513239]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer/Control" unique_id=536406289]
+visible = false
+self_modulate = Color(0.556953, 0.556953, 0.556953, 1)
+layout_mode = 0
+offset_left = -179.0
+offset_top = -21.0
+offset_right = 1122.0
+offset_bottom = 549.0
+texture = ExtResource("1_8u1oh")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/Control" unique_id=211136007]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 150.0
+grow_horizontal = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="Control" type="Control" parent="CanvasLayer/Control/MarginContainer" unique_id=1682489663]
+layout_mode = 2
+
+[node name="BoxContainer" type="BoxContainer" parent="CanvasLayer/Control/MarginContainer/Control" unique_id=1570674368]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 50.0
+grow_horizontal = 2
+theme_override_constants/separation = 23
+alignment = 1
+
+[node name="Label2" type="Label" parent="CanvasLayer/Control/MarginContainer/Control/BoxContainer" unique_id=1854494322]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.84980875, 0.84910715, 0, 1)
+theme_override_fonts/font = ExtResource("3_1nn6x")
+text = "The Light"
+
+[node name="PlayerList" type="HBoxContainer" parent="CanvasLayer/Control/MarginContainer/Control/BoxContainer" unique_id=919334275]
+custom_minimum_size = Vector2(210, 0)
+layout_mode = 2
+
+[node name="TimerLabel" type="Label" parent="CanvasLayer/Control/MarginContainer/Control/BoxContainer" unique_id=1756313953]
+custom_minimum_size = Vector2(100, 50)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_1nn6x")
+theme_override_font_sizes/font_size = 30
+text = "00:00"
+horizontal_alignment = 1
+
+[node name="BossList" type="HBoxContainer" parent="CanvasLayer/Control/MarginContainer/Control/BoxContainer" unique_id=1316793604]
+custom_minimum_size = Vector2(210, 0)
+layout_direction = 3
+layout_mode = 2
+
+[node name="Label3" type="Label" parent="CanvasLayer/Control/MarginContainer/Control/BoxContainer" unique_id=1075967828]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9647059, 0.33333334, 0.9098039, 1)
+theme_override_fonts/font = ExtResource("3_1nn6x")
+text = "The Dark"
+
+[node name="MarginContainer2" type="Control" parent="CanvasLayer/Control" unique_id=1791784903]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/Control/MarginContainer2" unique_id=368124546]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -374.0
+offset_right = 431.0
+grow_vertical = 0
+
+[node name="Control" type="Control" parent="CanvasLayer/Control/MarginContainer2/MarginContainer" unique_id=1194946992]
+layout_mode = 2
+
+[node name="Panel" type="Panel" parent="CanvasLayer/Control/MarginContainer2/MarginContainer/Control" unique_id=636138244]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_1nn6x")
+
+[node name="Label" type="Label" parent="CanvasLayer/Control/MarginContainer2/MarginContainer/Control" unique_id=121253362]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 23.0
+grow_horizontal = 2
+theme_override_fonts/font = ExtResource("3_1nn6x")
+theme_override_font_sizes/font_size = 33
+theme_override_styles/normal = SubResource("StyleBoxTexture_ng2d0")
+text = "Heroes"
+horizontal_alignment = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/Control/MarginContainer2/MarginContainer/Control" unique_id=2097141989]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 58
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="HeroesContainer" type="GridContainer" parent="CanvasLayer/Control/MarginContainer2/MarginContainer/Control/MarginContainer" unique_id=2013998394]
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
+columns = 5
+
+[node name="Control" type="HBoxContainer" parent="CanvasLayer/Control" unique_id=1459096401]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -173.0
+offset_top = -70.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="LockBtn" parent="CanvasLayer/Control/Control" unique_id=1459461965 instance=ExtResource("5_crmic")]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Lock"
+
+[node name="Panel" type="Panel" parent="CanvasLayer/Control/Control" unique_id=732677652]
+custom_minimum_size = Vector2(20, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxEmpty_jpbxq")
+
+[node name="RandomBtn" parent="CanvasLayer/Control/Control" unique_id=443554155 instance=ExtResource("5_crmic")]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Random"
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=375195295]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 1.7165086, 1.74582, -7.4435196)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1106934475]
+transform = Transform3D(14.716194, 0, 0, 0, 0.58540267, 0, 0, 0, 10.248415, 0, -0.6224482, 0)
+material_override = SubResource("StandardMaterial3D_1nn6x")
+mesh = SubResource("CylinderMesh_ng2d0")
+
+[node name="HeroModelContainer" type="Node3D" parent="." unique_id=637895769]
+
+[node name="NetworkManager" type="Node" parent="." unique_id=641392224]
+script = ExtResource("12_uwckn")
+
+[node name="SelectTimer" type="Timer" parent="NetworkManager" unique_id=48753868]
+
+[node name="StartTimer" type="Timer" parent="NetworkManager" unique_id=880785602]
+
+[connection signal="pressed" from="CanvasLayer/Control/Control/LockBtn" to="." method="_on_lock_btn_pressed"]
+[connection signal="pressed" from="CanvasLayer/Control/Control/RandomBtn" to="." method="_on_random_btn_pressed"]

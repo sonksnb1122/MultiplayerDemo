@@ -1,0 +1,6 @@
+[gd_resource type="StyleBoxTexture" load_steps=2 format=3 uid="uid://cu6l0emfkuo6f"]
+
+[ext_resource type="Texture2D" uid="uid://sl743jgmoj2i" path="res://Asset/Art/UI/Sprites/Frames/BPpvp_FrameBanner.png" id="1_eoair"]
+
+[resource]
+texture = ExtResource("1_eoair")

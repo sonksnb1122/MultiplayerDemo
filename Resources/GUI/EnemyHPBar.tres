@@ -1,0 +1,6 @@
+[gd_resource type="StyleBoxTexture" load_steps=2 format=3 uid="uid://b8a2agqymj4wl"]
+
+[ext_resource type="Texture2D" uid="uid://dm04x0h8xpjyo" path="res://Asset/Art/UI/Sprites/Common/pvp_lineDecorLightRed.png" id="1_qo7oa"]
+
+[resource]
+texture = ExtResource("1_qo7oa")

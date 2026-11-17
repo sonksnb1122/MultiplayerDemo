@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://clvjp428rfofy"]
+
+[ext_resource type="FontFile" uid="uid://bygv14b6v72eg" path="res://Asset/Art/UI/Fonts/RussoOne_Original.ttf" id="1_mulik"]
+
+[node name="Button" type="Button" unique_id=1230054124]
+custom_minimum_size = Vector2(0, 70)
+theme_override_fonts/font = ExtResource("1_mulik")
+theme_override_font_sizes/font_size = 40
+text = "Generic button"
