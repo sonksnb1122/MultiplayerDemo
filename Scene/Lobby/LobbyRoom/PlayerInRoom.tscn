@@ -28,10 +28,17 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+offset_left = 10.0
+offset_top = 8.0
+offset_right = -10.0
+offset_bottom = -8.0
+theme_override_constants/separation = 10
 
 [node name="Avatar" type="Panel" parent="Ctn" unique_id=696550263]
+custom_minimum_size = Vector2(50, 50)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 0
+size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxTexture_fwh1s")
 
 [node name="Name" parent="Ctn" unique_id=1564264574 instance=ExtResource("1_wnpr4")]
