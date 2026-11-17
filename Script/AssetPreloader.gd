@@ -3,8 +3,9 @@ extends RefCounted
 ## Loads the heavy scenes (hero models, skill VFX) on background threads so the game never
 ## freezes on a load() in the middle of hero select or a match.
 ##
-## CharacterDB calls start() once when the game launches. Later, get_scene() returns the
-## already loaded scene; if it is still loading it waits only for that one file.
+## Only what is needed gets loaded: the hero previewed in hero select, then, for the match,
+## the heroes actually picked and their skills (see CharacterDB.paths_for_heroes). The loading
+## screen waits for them; release_except() drops everything else from memory.
 ## Godot 4.4+ also compiles the GPU pipelines of meshes/materials as they load, which removes
 ## most of the "first time this VFX appears" hitch.
 ## Note: don't "warm up" VFX by spawning hidden copies: the Binbun VFX animate shared materials
@@ -50,6 +51,42 @@ static func get_scene(path: String) -> PackedScene:
 		push_error("AssetPreloader: %s is not a scene" % path)
 	_cache[path] = scene
 	return scene
+
+
+## True when [param path] can be taken with get_scene() without waiting
+static func is_ready(path: String) -> bool:
+	if _cache.has(path):
+		return true
+	if not _pending.has(path):
+		return false
+	return ResourceLoader.load_threaded_get_status(path) != ResourceLoader.THREAD_LOAD_IN_PROGRESS
+
+
+## Average loading progress (0..1) of [param paths]
+static func progress(paths: Array) -> float:
+	if paths.is_empty():
+		return 1.0
+	var total := 0.0
+	for path in paths:
+		var p := str(path)
+		if _cache.has(p) or not _pending.has(p):
+			total += 1.0
+			continue
+		var pr := []
+		var status := ResourceLoader.load_threaded_get_status(p, pr)
+		if status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			total += float(pr[0]) if not pr.is_empty() else 0.0
+		else:
+			total += 1.0
+	return total / paths.size()
+
+
+## Frees from memory every cached scene that is not in [param keep]
+## (e.g. the heroes previewed in hero select but not picked for the match).
+static func release_except(keep: Array) -> void:
+	for path in _cache.keys():
+		if not keep.has(path):
+			_cache.erase(path)
 
 
 ## True when every background load has finished (for a loading bar, if one is ever wanted).

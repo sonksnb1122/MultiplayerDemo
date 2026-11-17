@@ -18,6 +18,8 @@ extends Node3D
 var game_play_scene = preload("res://Scene/GamePlay/GamePlay.tscn")
 
 var selected_hero_btn: Node
+## Hero model waiting for its background load before it is shown
+var _preview_path := ""
 
 func _ready() -> void:
 	lock_btn.visible = false
@@ -95,6 +97,26 @@ func add_heroes_button()-> void:
 		pass
 	pass
 
+func _process(_delta: float) -> void:
+	if _preview_path.is_empty() or not AssetPreloader.is_ready(_preview_path): return
+	var hero_model_scene := AssetPreloader.get_scene(_preview_path)
+	_preview_path = ""
+	if hero_model_scene == null: return
+	for child in heroes_model_container.get_children():
+		child.queue_free()
+	var hero_model = hero_model_scene.instantiate()	
+	heroes_model_container.add_child(hero_model)
+	hero_model.position = Vector3(0,0,0)
+
+## Everyone has locked in: start loading the match's heroes and skills now, during the countdown
+func _preload_match_assets() -> void:
+	var hero_ids: Array = []
+	for peer_id in select_hero_network_manager.hero_selection_status:
+		hero_ids.append(select_hero_network_manager.hero_selection_status[peer_id][GameDefines.HERO_ID])
+	if selected_hero_btn:
+		hero_ids.append(selected_hero_btn.character_data.id)  # ours, even if the server hasn't echoed it yet
+	AssetPreloader.start(CharacterDB.paths_for_heroes(hero_ids))
+
 func _on_count_down_trigged(time: int) -> void:
 	timer_label.text = number_to_time_string(time)
 	
@@ -114,6 +136,7 @@ func _on_start_game_pending():
 		select_hero_network_manager.try_start_game()	
 	lock_btn.visible = false
 	rand_btn.visible = false
+	_preload_match_assets.call_deferred()
 	timer_label.add_theme_color_override("font_color", Color(1, 0, 0))
 	
 func number_to_time_string(num: int) -> String:
@@ -128,11 +151,9 @@ func _on_hero_change(hero_btn: Node) -> void:
 		for child in heroes_model_container.get_children():
 			child.queue_free()
 		selected_hero_btn = hero_btn			
-		# Loaded in the background since the game started (AssetPreloader): no freeze when switching hero
-		var hero_model_scene = AssetPreloader.get_scene(selected_hero_btn.character_data.character_scene)
-		var hero_model = hero_model_scene.instantiate()	
-		heroes_model_container.add_child(hero_model)
-		hero_model.position = Vector3(0,0,0)
+		# Only this hero's model is loaded, on a background thread: _process shows it when ready
+		_preview_path = selected_hero_btn.character_data.character_scene
+		AssetPreloader.start([_preview_path])
 		lock_btn.visible = true
 		
 		select_hero_network_manager.set_selection_status.rpc_id(GameDefines.HOST_ID, selected_hero_btn.character_data.id, false)

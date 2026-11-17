@@ -14,11 +14,16 @@ var player_scene = preload("res://Scene/Player/Player.tscn")
 var finished_spawned_all_player = false;
 var timer_force_spawn: Timer
 
+# Loading: this peer tells the host it is ready only once the match assets are loaded
+var _loading := false
+var _load_paths: Array = []
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	# A player who leaves the match (Exit to Main Menu / Quit) disappears from the battlefield
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
-	on_ready.rpc_id(GameDefines.HOST_ID)
+	# The hero selection is given to GamePlayNetwork right after this scene is added: start next frame
+	_start_loading.call_deferred()
 	
 	if not multiplayer.is_server(): return
 	
@@ -28,6 +33,34 @@ func _ready() -> void:
 	# FIX: Timer must be in the scene tree, otherwise it never ticks
 	add_child(timer_force_spawn)
 	timer_force_spawn.start()
+
+func _start_loading() -> void:
+	var hero_ids: Array = []
+	for peer_id in game_play_network.hero_selection_status:
+		hero_ids.append(game_play_network.hero_selection_status[peer_id][GameDefines.HERO_ID])
+	_load_paths = CharacterDB.paths_for_heroes(hero_ids)
+	AssetPreloader.start(_load_paths)  # already started in hero select: only the rest is loaded
+	_loading = true
+
+func _update_loading() -> void:
+	var screen = game_play.get_node_or_null("LoadingScreen")
+	var done := true
+	for path in _load_paths:
+		if not AssetPreloader.is_ready(path):
+			done = false
+			break
+	if screen != null:
+		screen.set_progress(AssetPreloader.progress(_load_paths) * 0.9)
+	if not done: return
+	_loading = false
+	for path in _load_paths:
+		AssetPreloader.get_scene(path)  # take them out of the loader into the cache
+	# Heroes previewed in hero select but not picked: free them
+	AssetPreloader.release_except(_load_paths)
+	if screen != null:
+		screen.set_progress(0.95)
+		screen.set_status("Waiting for other players...")
+	on_ready.rpc_id(GameDefines.HOST_ID)
 
 func _on_timer_force_spawn_time_out():
 	if not multiplayer.is_server(): return
@@ -49,6 +82,8 @@ func _on_timer_force_spawn_time_out():
 	spawn_heros_to_tree.rpc(player_infos_for_spawn)
 		
 func _process(delta: float) -> void:
+	if _loading:
+		_update_loading()
 	if !finished_spawned_all_player && is_hero_chosed_result_setted():
 		var number_hero_ready = 0
 		for player in player_list:

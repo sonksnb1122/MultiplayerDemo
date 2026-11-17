@@ -13,17 +13,28 @@ func get_all_character() -> Array[CharacterData]:
 	
 func _ready() -> void:
 	load_all_characters()
-	preload_heavy_scenes()
-
-## Starts loading the hero models and every skill VFX on background threads right at launch,
-## so they are ready long before hero select / the match need them.
-func preload_heavy_scenes() -> void:
+	
+## Every heavy scene a match with these heroes needs: their models, the VFX/models of their
+## skills and basic-attack projectile, and the status VFX (stun, slow, shield, auras...).
+func paths_for_heroes(hero_ids: Array) -> Array:
 	var paths: Array = []
-	for c in characters:
-		if c != null and not c.character_scene.is_empty():
-			paths.append(c.character_scene)
-	paths.append_array(AssetPreloader.scene_paths_in([SkillDB, StatusEffects]))
-	AssetPreloader.start(paths)
+	for id in hero_ids:
+		var c := get_character(int(id))
+		if c == null:
+			continue
+		_add_path(paths, c.character_scene)
+		for skill in SkillDB.get_skills(c.id):
+			_add_path(paths, skill.vfx_scene)
+			_add_path(paths, skill.projectile_model)
+		var basic: Dictionary = BasicAttackFx.PROJECTILES.get(c.id, {})
+		_add_path(paths, str(basic.get("model", "")))
+	for p in AssetPreloader.scene_paths_in([StatusEffects]):
+		_add_path(paths, p)
+	return paths
+
+func _add_path(paths: Array, path: String) -> void:
+	if not path.is_empty() and not paths.has(path):
+		paths.append(path)
 	
 func load_all_characters():
 	var resources_path = "res://Resources/Character/"

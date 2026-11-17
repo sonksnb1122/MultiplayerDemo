@@ -23,6 +23,9 @@ func _get_camera() -> Camera3D:
 	
 func _on_game_started():
 	game_started = true
+	var loading_screen = get_node_or_null("LoadingScreen")
+	if loading_screen != null:
+		loading_screen.finish()
 		
 func _on_heroes_status_updated(heroes_status: Dictionary):
 	player_hud.set_heroes_status(heroes_status)

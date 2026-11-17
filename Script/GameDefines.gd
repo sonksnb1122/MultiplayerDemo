@@ -10,7 +10,8 @@ const GAME_PORT = 44321
 const MAX_PLAYER = 4
 const HOST_ID = 1
 const COOL_DOWN_START_GAME = 3
-const TIMEOUT_FORCE_SPAWN_HERO = 3
+## Seconds the host waits for slow peers (still loading) before spawning every hero anyway
+const TIMEOUT_FORCE_SPAWN_HERO = 20
 const COOL_DOWN_FOR_RESPAWN_AFTER_DEAD = 0.5
 
 const ROOM_SUFFIX_STR = "Room#"

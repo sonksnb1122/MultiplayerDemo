@@ -17,7 +17,7 @@ warnings/check_angle_interpolation_type_conflicting=false
 
 config/name="Multiplayer Demo"
 run/main_scene="uid://daupcqnqk1rtr"
-config/features=PackedStringArray("4.6", "Forward Plus")
+config/features=PackedStringArray("4.6", "Mobile")
 run/max_fps=60
 config/icon="res://icon.svg"
 
@@ -27,6 +27,7 @@ NetworkManager="*res://Scene/Lobby/NetworkManager.tscn"
 LobbyNetworkManager="*res://Scene/Network/LobbyNetworkManager.tscn"
 BroadcastManager="*res://Scene/Network/BroadcastNetworkManager.tscn"
 CharacterDB="*res://Script/CharacterDB.gd"
+GraphicsSettings="*res://Script/GraphicsSettings.gd"
 
 [display]
 
@@ -53,5 +54,6 @@ Moving={
 
 [rendering]
 
+renderer/rendering_method="mobile"
 lights_and_shadows/directional_shadow/size=2048
 lights_and_shadows/directional_shadow/soft_shadow_filter_quality=1
