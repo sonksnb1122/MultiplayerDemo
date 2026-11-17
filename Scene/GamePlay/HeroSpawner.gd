@@ -23,21 +23,28 @@ func _ready() -> void:
 	timer_force_spawn = Timer.new()
 	timer_force_spawn.wait_time = GameDefines.TIMEOUT_FORCE_SPAWN_HERO
 	timer_force_spawn.timeout.connect(_on_timer_force_spawn_time_out)
+	# FIX: Timer must be in the scene tree, otherwise it never ticks
+	add_child(timer_force_spawn)
 	timer_force_spawn.start()
 
 func _on_timer_force_spawn_time_out():
 	if not multiplayer.is_server(): return
-	if finished_spawned_all_player: return
-	
+	if finished_spawned_all_player:
+		# FIX: everyone already spawned normally, no need to keep the timer running
+		timer_force_spawn.stop()
+		return
+
 	if not is_hero_chosed_result_setted():
 		timer_force_spawn.wait_time = 1
 		return
-		
+
+	print("Force spawn heroes after timeout")
 	timer_force_spawn.stop()
 	var player_infos_for_spawn: Dictionary
 	for peer_id in game_play_network.hero_selection_status:
 		player_infos_for_spawn[peer_id] = get_hero_config_for_spawn(peer_id)
-		spawn_heros_to_tree.rpc(player_infos_for_spawn)
+	# FIX: send the RPC once, after the dictionary is complete (was inside the loop)
+	spawn_heros_to_tree.rpc(player_infos_for_spawn)
 		
 func _process(delta: float) -> void:
 	if !finished_spawned_all_player && is_hero_chosed_result_setted():
