@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://c4pr3l4xm610g"]
+[gd_scene load_steps=14 format=3 uid="uid://c4pr3l4xm610g"]
 
 [ext_resource type="Script" uid="uid://735ioghm2fcf" path="res://Scene/GamePlay/GamePlay.gd" id="1_uxwnf"]
 [ext_resource type="Texture2D" uid="uid://4mjuorc8k4v2" path="res://Asset/3D/Textures/ODG24R0.jpg" id="2_7ypr8"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://c4al6q0fqx1d6" path="res://Scene/GamePlay/GamePlayHUD.tscn" id="6_wbgh5"]
 [ext_resource type="Script" uid="uid://cmgsalalbiluj" path="res://Scene/GamePlay/HeroSpawner.gd" id="7_bc2dv"]
 [ext_resource type="Script" uid="uid://3kld0greicae" path="res://Scene/GamePlay/GamePlayNetwork.gd" id="8_5ivyy"]
+[ext_resource type="PackedScene" path="res://Scene/PauseMenu/PauseMenu.tscn" id="9_pause"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_hxmeu"]
 sky_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
@@ -69,3 +70,5 @@ script = ExtResource("7_bc2dv")
 script = ExtResource("8_5ivyy")
 
 [node name="PlayTimer" type="Timer" parent="GamePlayNetwork" unique_id=684964625]
+
+[node name="PauseMenu" parent="." instance=ExtResource("9_pause")]

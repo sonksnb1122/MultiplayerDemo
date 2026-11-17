@@ -61,7 +61,7 @@ func _create_skill_bar() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not NetworkManager.is_mine(player.peer_id):
 		return
-	if not player.hero_spawner.is_game_started():
+	if not player.hero_spawner.is_game_started() or PauseMenu.is_open:
 		return
 	for i in mini(ACTIONS.size(), skills.size()):
 		if event.is_action_pressed(ACTIONS[i]):

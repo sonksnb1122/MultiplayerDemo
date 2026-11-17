@@ -3,6 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b3cj7i8ouqaw5"
+path="res://.godot/imported/noise_wisp.png-ea1d60f04c691c799175fb82dd483f9f.ctex"
 metadata={
 "vram_texture": false
 }
@@ -10,6 +11,7 @@ metadata={
 [deps]
 
 source_file="res://addons/emberset/textures/noise_wisp.png"
+dest_files=["res://.godot/imported/noise_wisp.png-ea1d60f04c691c799175fb82dd483f9f.ctex"]
 
 [params]
 

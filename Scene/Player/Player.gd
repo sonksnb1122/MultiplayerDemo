@@ -123,6 +123,7 @@ func init(hero_team_info: Dictionary):
 	
 func _input(event: InputEvent) -> void:
 	if not NetworkManager.is_mine(peer_id): return
+	if PauseMenu.is_open: return
 	if hero_spawner.is_game_started():
 		if event.is_action("Moving"):
 			shoot_ray_cast()
@@ -208,6 +209,10 @@ func _physics_process(delta: float) -> void:
 		attack_cooldown += delta
 	if player_state == PlayerState.MOVING:
 		move_to_target(target_position)
+	elif player_state == PlayerState.ATTACK and not is_instance_valid(target_attack):
+		# The target left the game
+		player_state = PlayerState.IDLE
+		trigger_animation.rpc(peer_id, "idle")
 	elif player_state == PlayerState.ATTACK:		
 		if (target_attack.position - global_position).length() > character_data.attack_range:
 			trigger_animation.rpc(peer_id, "moving")
@@ -222,6 +227,7 @@ func perform_attack() -> void:
 	if not multiplayer.is_server(): return
 	# The "attack" animation is also used to cast skills: only a real basic attack deals damage
 	if player_state != PlayerState.ATTACK or status.is_stunned(): return
+	if not is_instance_valid(target_attack): return
 	#if attack_cooldown >= character_data.attack_speed:
 	if target_attack is Player:
 		var bonus := status.consume_empowered_attack()
@@ -434,7 +440,7 @@ func _end_cast() -> void:
 	cast_time_left = 0.0
 	var next = state_before_cast
 	state_before_cast = PlayerState.IDLE
-	if next == PlayerState.ATTACK and not (target_attack is Player and not target_attack.is_dead()):
+	if next == PlayerState.ATTACK and not (is_instance_valid(target_attack) and target_attack is Player and not target_attack.is_dead()):
 		next = PlayerState.IDLE
 	if next != PlayerState.MOVING and next != PlayerState.ATTACK:
 		next = PlayerState.IDLE

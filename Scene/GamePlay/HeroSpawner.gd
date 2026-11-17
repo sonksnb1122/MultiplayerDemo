@@ -16,6 +16,8 @@ var timer_force_spawn: Timer
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	# A player who leaves the match (Exit to Main Menu / Quit) disappears from the battlefield
+	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 	on_ready.rpc_id(GameDefines.HOST_ID)
 	
 	if not multiplayer.is_server(): return
@@ -71,6 +73,12 @@ func _process(delta: float) -> void:
 			player_infos_for_spawn[ready_id] = get_hero_config_for_spawn(ready_id)
 			
 		spawn_heros_to_tree.rpc(player_infos_for_spawn)
+
+func _on_peer_disconnected(peer_id: int) -> void:
+	var player = player_list.get(peer_id)
+	player_list.erase(peer_id)
+	if is_instance_valid(player):
+		player.queue_free()
 
 func is_game_started() -> bool:
 	return game_play.game_started

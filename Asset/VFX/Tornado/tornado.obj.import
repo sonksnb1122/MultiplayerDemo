@@ -4,12 +4,14 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://5kuxma7se8xk"
+path="res://.godot/imported/tornado.obj-8dc4568475009d091a14b4d88bd07f7e.mesh"
 
 [deps]
 
-files=["res://.godot/imported/tornado.obj-1da1aea8d71501934ca7827d45954cf6.mesh"]
+files=["res://.godot/imported/tornado.obj-8dc4568475009d091a14b4d88bd07f7e.mesh"]
 
 source_file="res://Asset/VFX/Tornado/tornado.obj"
+dest_files=["res://.godot/imported/tornado.obj-8dc4568475009d091a14b4d88bd07f7e.mesh", "res://.godot/imported/tornado.obj-8dc4568475009d091a14b4d88bd07f7e.mesh"]
 
 [params]
 

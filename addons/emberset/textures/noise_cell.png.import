@@ -3,6 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ddikuh0c6j5pq"
+path="res://.godot/imported/noise_cell.png-4d4987780028f9bbe45d9d5a46d1de35.ctex"
 metadata={
 "vram_texture": false
 }
@@ -10,6 +11,7 @@ metadata={
 [deps]
 
 source_file="res://addons/emberset/textures/noise_cell.png"
+dest_files=["res://.godot/imported/noise_cell.png-4d4987780028f9bbe45d9d5a46d1de35.ctex"]
 
 [params]
 

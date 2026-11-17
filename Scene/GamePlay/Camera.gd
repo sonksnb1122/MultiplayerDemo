@@ -6,6 +6,9 @@ extends Camera3D
 var drag_active = false
 
 func _input(event: InputEvent) -> void:
+	if PauseMenu.is_open:
+		drag_active = false
+		return
 	if game_play.game_started:
 		#process camera zoom in, zoom out
 		if event.is_action("CameraZoomIn"):
