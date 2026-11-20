@@ -1,11 +1,13 @@
 class_name SkillBar
 extends Control
-## Bottom-right skill bar for the local hero: one slot per skill with its key, name, colour and
-## a cooldown overlay. Built in code so no scene has to be edited.
+## Skill bar for the local hero: one slot per skill with its key, name, colour and a cooldown
+## overlay. Built in code. When added to the HUD's SkillArea it fills that area (under the hp
+## bar); otherwise it sits in the bottom-right corner.
 
-const SLOT_SIZE := Vector2(86, 86)
 const SPACING := 8
 const MARGIN := 16
+
+var SLOT_SIZE := Vector2(86, 86)
 
 var caster: SkillCaster
 var _overlays: Array[ColorRect] = []
@@ -18,15 +20,30 @@ func setup(skill_caster: SkillCaster) -> void:
 	caster = skill_caster
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var count := caster.skills.size()
-	var width := count * SLOT_SIZE.x + (count - 1) * SPACING
-	anchor_left = 1.0
-	anchor_right = 1.0
-	anchor_top = 1.0
-	anchor_bottom = 1.0
-	offset_left = -width - MARGIN
-	offset_right = -MARGIN
-	offset_top = -SLOT_SIZE.y - MARGIN
-	offset_bottom = -MARGIN
+	var width: float
+	var parent_area := get_parent() as Control
+	var embedded := parent_area != null and parent_area.name == "SkillArea"
+	if embedded:
+		var area_size := parent_area.size
+		if area_size.x < 1.0 or area_size.y < 1.0:
+			area_size = Vector2(parent_area.offset_right - parent_area.offset_left, parent_area.offset_bottom - parent_area.offset_top)
+		width = area_size.x
+		SLOT_SIZE = Vector2((area_size.x - (count - 1) * SPACING) / maxf(count, 1), area_size.y)
+		set_anchors_preset(Control.PRESET_FULL_RECT)
+		offset_left = 0
+		offset_right = 0
+		offset_top = 0
+		offset_bottom = 0
+	else:
+		width = count * SLOT_SIZE.x + (count - 1) * SPACING
+		anchor_left = 1.0
+		anchor_right = 1.0
+		anchor_top = 1.0
+		anchor_bottom = 1.0
+		offset_left = -width - MARGIN
+		offset_right = -MARGIN
+		offset_top = -SLOT_SIZE.y - MARGIN
+		offset_bottom = -MARGIN
 
 	for i in count:
 		_build_slot(i, caster.skills[i])
@@ -34,7 +51,8 @@ func setup(skill_caster: SkillCaster) -> void:
 	_message = Label.new()
 	_message.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_message.position = Vector2(0, -34)
+	# Above the whole hero panel when embedded, above the slots otherwise
+	_message.position = Vector2(0, -34 - (parent_area.position.y if embedded else 0.0))
 	_message.size = Vector2(width, 28)
 	_message.add_theme_color_override("font_color", Color(1, 0.4, 0.35))
 	_message.add_theme_constant_override("outline_size", 6)

@@ -23,61 +23,53 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_322da")
 
-[node name="Control" type="Control" parent="." unique_id=1067046699]
-custom_minimum_size = Vector2(300, 100)
+[node name="Panel" type="Control" parent="." unique_id=1067046699]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -20.0
-offset_top = -40.0
-offset_right = 20.0
+offset_left = -200.0
+offset_top = -150.0
+offset_right = 200.0
+offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 0
+mouse_filter = 2
 
-[node name="BoxContainer" type="BoxContainer" parent="Control" unique_id=1608296303]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-
-[node name="avatar" type="TextureRect" parent="Control/BoxContainer" unique_id=984789035]
-custom_minimum_size = Vector2(100, 100)
-layout_mode = 2
-texture = ExtResource("3_miods")
-expand_mode = 1
-stretch_mode = 6
-
-[node name="MarginContainer" type="MarginContainer" parent="Control/BoxContainer" unique_id=1004657541]
-custom_minimum_size = Vector2(200, 0)
-layout_mode = 2
-theme_override_constants/margin_top = 30
-
-[node name="Control" type="Control" parent="Control/BoxContainer/MarginContainer" unique_id=2031964038]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="TextureRect" type="NinePatchRect" parent="Control/BoxContainer/MarginContainer/Control" unique_id=470177027]
+[node name="Background" type="NinePatchRect" parent="Panel" unique_id=470177027]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 texture = ExtResource("3_322da")
 patch_margin_left = 16
 patch_margin_top = 16
 patch_margin_right = 16
 patch_margin_bottom = 16
 
-[node name="hp_bar" type="TextureProgressBar" parent="Control/BoxContainer/MarginContainer/Control" unique_id=94803672]
-custom_minimum_size = Vector2(0, 15)
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_bottom = 29.0
-grow_horizontal = 2
+[node name="avatar" type="TextureRect" parent="Panel" unique_id=984789035]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 128.0
+offset_bottom = 128.0
+mouse_filter = 2
+texture = ExtResource("3_miods")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="hp_bar" type="TextureProgressBar" parent="Panel" unique_id=94803672]
+layout_mode = 0
+offset_left = 138.0
+offset_top = 12.0
+offset_right = 390.0
+offset_bottom = 42.0
+mouse_filter = 2
 max_value = 110.0
 value = 55.0
 nine_patch_stretch = true
@@ -85,47 +77,70 @@ stretch_margin_left = 6
 stretch_margin_top = 6
 stretch_margin_right = 6
 stretch_margin_bottom = 6
+texture_under = ExtResource("4_ctaaj")
 texture_progress = ExtResource("4_ctaaj")
+tint_under = Color(0.22, 0.07, 0.07, 1)
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Control/BoxContainer/MarginContainer/Control" unique_id=1761902495]
-custom_minimum_size = Vector2(0, 30)
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 0
+[node name="InfoRow" type="HBoxContainer" parent="Panel" unique_id=1761902495]
+layout_mode = 0
+offset_left = 146.0
+offset_top = 12.0
+offset_right = 384.0
+offset_bottom = 42.0
+mouse_filter = 2
+theme_override_constants/separation = 4
 
-[node name="Panel" type="Panel" parent="Control/BoxContainer/MarginContainer/Control/HBoxContainer" unique_id=1702062725]
-custom_minimum_size = Vector2(20, 20)
+[node name="name_label" type="Label" parent="Panel/InfoRow" unique_id=1992830571]
 layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("7_k8g7v")
+theme_override_font_sizes/font_size = 16
+text = "Knight"
+vertical_alignment = 1
+
+[node name="Panel" type="Panel" parent="Panel/InfoRow" unique_id=1702062725]
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxTexture_sctna")
 
-[node name="damage_label" type="Label" parent="Control/BoxContainer/MarginContainer/Control/HBoxContainer" unique_id=1204572788]
+[node name="damage_label" type="Label" parent="Panel/InfoRow" unique_id=1204572788]
 layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("7_k8g7v")
-text = "201"
+theme_override_font_sizes/font_size = 16
+text = "20"
+vertical_alignment = 1
 
-[node name="Panel2" type="Panel" parent="Control/BoxContainer/MarginContainer/Control/HBoxContainer" unique_id=1608568149]
-custom_minimum_size = Vector2(20, 20)
+[node name="Spacer" type="Control" parent="Panel/InfoRow"]
+custom_minimum_size = Vector2(6, 0)
 layout_mode = 2
+mouse_filter = 2
+
+[node name="Panel2" type="Panel" parent="Panel/InfoRow" unique_id=1608568149]
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxTexture_1yjkl")
 
-[node name="speed_label" type="Label" parent="Control/BoxContainer/MarginContainer/Control/HBoxContainer" unique_id=419818328]
+[node name="speed_label" type="Label" parent="Panel/InfoRow" unique_id=419818328]
 layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("7_k8g7v")
-text = "20"
+theme_override_font_sizes/font_size = 16
+text = "10"
+vertical_alignment = 1
 
-[node name="MarginContainer" type="MarginContainer" parent="Control/BoxContainer/MarginContainer/Control" unique_id=166526552]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_bottom = 23.0
-grow_horizontal = 2
-theme_override_constants/margin_left = 10
-
-[node name="name_label" type="Label" parent="Control/BoxContainer/MarginContainer/Control/MarginContainer" unique_id=1992830571]
-layout_mode = 2
-theme_override_fonts/font = ExtResource("7_k8g7v")
-text = "Leo"
+[node name="SkillArea" type="Control" parent="Panel"]
+layout_mode = 0
+offset_left = 138.0
+offset_top = 50.0
+offset_right = 390.0
+offset_bottom = 128.0
+mouse_filter = 2

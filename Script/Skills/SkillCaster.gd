@@ -52,7 +52,11 @@ func _create_skill_bar() -> void:
 	if player.player_HUD == null:
 		return
 	_skill_bar = SkillBar.new()
-	player.player_HUD.add_child(_skill_bar)
+	var area: Control = player.player_HUD.get_skill_area()
+	if area != null:
+		area.add_child(_skill_bar)  # under the hp bar, inside the hero panel
+	else:
+		player.player_HUD.add_child(_skill_bar)
 	_skill_bar.setup(self)
 
 

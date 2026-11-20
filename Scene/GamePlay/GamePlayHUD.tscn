@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://c4al6q0fqx1d6"]
+[gd_scene load_steps=4 format=3 uid="uid://c4al6q0fqx1d6"]
 
 [ext_resource type="Script" uid="uid://cseh37g1j5byw" path="res://Scene/GamePlay/GamePlayHUD.gd" id="1_herkh"]
 [ext_resource type="FontFile" uid="uid://bygv14b6v72eg" path="res://Asset/Art/UI/Fonts/RussoOne_Original.ttf" id="2_drgyk"]
+[ext_resource type="Script" path="res://Scene/GamePlay/Minimap.gd" id="3_minimap"]
 
 [node name="PlayerHud" type="Control" unique_id=1370111952]
 layout_mode = 3
@@ -69,3 +70,19 @@ theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("2_drgyk")
 theme_override_font_sizes/font_size = 30
 text = "The Dark"
+
+[node name="Minimap" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -106.0
+offset_top = -106.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("3_minimap")
