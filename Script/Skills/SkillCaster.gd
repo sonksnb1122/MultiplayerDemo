@@ -99,12 +99,13 @@ func local_cooldown_left(slot: int) -> float:
 
 func _pick_target(hit: Dictionary, point: Vector3, skill: SkillData) -> Player:
 	var collider = hit.get("collider")
-	if collider is Player and player.is_enemy(collider) and not collider.is_dead():
+	if collider is Player and player.is_enemy(collider) and not collider.is_dead() and not collider.is_hidden_locally:
 		return collider
 	# Closest enemy to the cursor, then closest enemy in range of the hero.
 	var best: Player = null
 	var best_dist := CURSOR_PICK_RADIUS
 	for other in _enemies():
+		if other.is_hidden_locally: continue
 		var d := _flat_distance(other.global_position, point)
 		if d <= best_dist:
 			best = other
@@ -113,6 +114,7 @@ func _pick_target(hit: Dictionary, point: Vector3, skill: SkillData) -> Player:
 		return best
 	best_dist = skill.cast_range
 	for other in _enemies():
+		if other.is_hidden_locally: continue
 		var d := _flat_distance(other.global_position, player.global_position)
 		if d <= best_dist:
 			best = other
@@ -151,7 +153,8 @@ func request_cast(slot: int, target_peer: int, aim_point: Vector3) -> void:
 	var target: Player = null
 	if skill.is_targeted():
 		target = player.hero_spawner.get_player(target_peer) as Player
-		if target == null or not player.is_enemy(target) or target.is_dead():
+		if target == null or not player.is_enemy(target) or target.is_dead() \
+				or Vision.is_hidden(target, player.team_side, player.hero_spawner.player_list.values()):
 			_fail(slot, "No target")
 			return
 		if _flat_distance(target.global_position, player.global_position) > skill.cast_range + RANGE_TOLERANCE:

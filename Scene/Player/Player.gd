@@ -80,6 +80,9 @@ const REPATH_INTERVAL := 0.5
 const REPATH_GOAL_MOVED := 1.0
 ## A path corner counts as reached closer than this
 const WAYPOINT_REACHED := 0.6
+## Every peer: the local player's team can't see this (enemy) hero (out of vision or in a bush)
+var is_hidden_locally := false
+var _vision_timer := 0.0
 ## server: peer_id -> Time.get_ticks_msec() of the last damage from that enemy (kills / assists)
 var damage_log := {}
 var _path := PackedVector3Array()
@@ -266,8 +269,8 @@ func _physics_process(delta: float) -> void:
 		attack_cooldown += delta
 	if player_state == PlayerState.MOVING:
 		move_to_target(target_position)
-	elif player_state == PlayerState.ATTACK and (not is_instance_valid(target_attack) or not target_attack is Player or target_attack.is_dead()):
-		# The target died or left the game: stop attacking, wait for the next order
+	elif player_state == PlayerState.ATTACK and (not is_instance_valid(target_attack) or not target_attack is Player or target_attack.is_dead() or Vision.is_hidden(target_attack, team_side, hero_spawner.player_list.values())):
+		# The target died, left the game or went out of sight: stop attacking, wait for the next order
 		player_state = PlayerState.IDLE
 		target_attack = null
 		_clear_path()
@@ -415,6 +418,10 @@ func _sync_transform_to_clients(delta: float) -> void:
 # --- CLIENT SMOOTHING ---
 
 func _process(delta: float) -> void:
+	_vision_timer -= delta
+	if _vision_timer <= 0.0:
+		_vision_timer = 0.1
+		_update_vision()
 	if multiplayer.is_server() or not _has_net_target: return
 	var weight := 1.0 - exp(-CLIENT_SMOOTHING * delta)
 	global_position = global_position.lerp(_net_target_pos, weight)
@@ -507,12 +514,37 @@ func set_current_hp(object_target_peer_id: int, damage_take: int, current_hp_aft
 	if current_hp <= 0:
 		handle_player_dead()
 
-## Every peer: show / hide the hero (model, hp bar) and turn its collisions on / off
+## Every peer: turn the body's collision on / off with life, then refresh what is shown
 func _set_alive_visual(alive: bool) -> void:
-	$character.visible = alive
-	$hp_bar.visible = alive
 	$CollisionShape3D.set_deferred("disabled", not alive)
-	$ClickArea/CollisionShape3D.set_deferred("disabled", not alive)
+	_apply_visibility()
+
+## Shown (model, hp bar, effects) and clickable only when alive and not hidden in a bush
+func _apply_visibility() -> void:
+	var shown := current_hp > 0 and not is_hidden_locally
+	# Every 3D child (model, hp bar, status effects); not the CanvasLayer with the local HUD
+	for child in get_children():
+		if child is Node3D and child.name != "ClickArea":
+			child.visible = shown
+	$ClickArea/CollisionShape3D.set_deferred("disabled", not shown)
+
+## Every peer: is this hero out of sight of the local player's team? (Vision)
+func _update_vision() -> void:
+	var hidden := false
+	if not NetworkManager.is_mine(peer_id) and hero_spawner is HeroSpawner:
+		var me = hero_spawner.get_player(multiplayer.get_unique_id())
+		if me != null:
+			hidden = Vision.is_hidden(self, me.team_side, hero_spawner.player_list.values())
+	if hidden != is_hidden_locally or hidden:
+		# (re-applied while hidden: status effects attached meanwhile must stay hidden too)
+		is_hidden_locally = hidden
+		_apply_visibility()
+
+## Server: heal [param amount] hp (healing zone)
+func heal(amount: int) -> void:
+	if not multiplayer.is_server() or is_dead() or current_hp >= character_data.hp: return
+	current_hp = mini(current_hp + amount, character_data.hp)
+	set_current_hp.rpc(peer_id, 0, current_hp)
 
 @rpc("authority", "call_local", "reliable")
 func trigger_animation(object_target_peer_id: int, animation_name: String):
@@ -582,6 +614,7 @@ func hero_clicked(peer_id_object_clicked: int):
 		print("hero_clicked: not found the hero with peer_id = " + str(peer_id_object_clicked))
 		
 	if hero_is_clicked == null or hero_is_clicked.is_dead(): return
+	if Vision.is_hidden(hero_is_clicked, team_side, get_parent().player_list.values()): return
 	if hero_is_clicked.team_side != team_side:
 		target_attack = hero_is_clicked
 		target_position = hero_is_clicked.position

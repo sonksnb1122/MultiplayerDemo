@@ -1,6 +1,8 @@
-[gd_scene load_steps=32 format=3]
+[gd_scene load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://Scene/GamePlay/ArenaNavigation.gd" id="1_nav"]
+[ext_resource type="Script" path="res://Scene/GamePlay/Bush.gd" id="2_bush"]
+[ext_resource type="Script" path="res://Scene/GamePlay/HealZone.gd" id="3_heal"]
 [ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/barrel_large.gltf" id="m0"]
 [ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/barrel_small_stack.gltf" id="m1"]
 [ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/barrier.gltf" id="m2"]
@@ -59,6 +61,12 @@ size = Vector3(4.59, 5.4, 1.1475)
 [sub_resource type="BoxShape3D" id="Box_wall_broken"]
 size = Vector3(4.59, 5.4, 1.1475)
 
+[sub_resource type="BoxShape3D" id="Box_bound_x"]
+size = Vector3(121, 3, 1)
+
+[sub_resource type="BoxShape3D" id="Box_bound_z"]
+size = Vector3(1, 3, 121)
+
 [sub_resource type="NavigationMesh" id="NavMesh_arena"]
 geometry_parsed_geometry_type = 1
 geometry_source_geometry_mode = 1
@@ -68,7 +76,7 @@ cell_height = 0.25
 agent_height = 3.0
 agent_radius = 1.0
 agent_max_climb = 0.3
-filter_baking_aabb = AABB(-100, -2, -100, 200, 12, 200)
+filter_baking_aabb = AABB(-60, -2, -60, 120, 12, 120)
 
 [node name="Arena" type="NavigationRegion3D"]
 navigation_mesh = SubResource("NavMesh_arena")
@@ -596,3 +604,353 @@ transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Props/chest_gold_1"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8775, 0.0309)
 shape = SubResource("Box_chest_gold")
+
+[node name="Boundary" type="Node3D" parent="." groups=["navigation_geometry"]]
+
+[node name="North" type="StaticBody3D" parent="Boundary"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -60)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Boundary/North"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("Box_bound_x")
+
+[node name="Fence1" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -57.3, 0, 0)
+
+[node name="Fence2" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -51.9, 0, 0)
+
+[node name="Fence3" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -46.5, 0, 0)
+
+[node name="Fence4" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -41.1, 0, 0)
+
+[node name="Fence5" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -35.7, 0, 0)
+
+[node name="Fence6" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -30.3, 0, 0)
+
+[node name="Fence7" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -24.9, 0, 0)
+
+[node name="Fence8" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -19.5, 0, 0)
+
+[node name="Fence9" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -14.1, 0, 0)
+
+[node name="Fence10" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -8.7, 0, 0)
+
+[node name="Fence11" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -3.3, 0, 0)
+
+[node name="Fence12" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 2.1, 0, 0)
+
+[node name="Fence13" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 7.5, 0, 0)
+
+[node name="Fence14" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 12.9, 0, 0)
+
+[node name="Fence15" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 18.3, 0, 0)
+
+[node name="Fence16" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 23.7, 0, 0)
+
+[node name="Fence17" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 29.1, 0, 0)
+
+[node name="Fence18" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 34.5, 0, 0)
+
+[node name="Fence19" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 39.9, 0, 0)
+
+[node name="Fence20" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 45.3, 0, 0)
+
+[node name="Fence21" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 50.7, 0, 0)
+
+[node name="Fence22" parent="Boundary/North" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 56.1, 0, 0)
+
+[node name="South" type="StaticBody3D" parent="Boundary"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 60)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Boundary/South"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("Box_bound_x")
+
+[node name="Fence1" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -57.3, 0, 0)
+
+[node name="Fence2" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -51.9, 0, 0)
+
+[node name="Fence3" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -46.5, 0, 0)
+
+[node name="Fence4" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -41.1, 0, 0)
+
+[node name="Fence5" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -35.7, 0, 0)
+
+[node name="Fence6" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -30.3, 0, 0)
+
+[node name="Fence7" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -24.9, 0, 0)
+
+[node name="Fence8" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -19.5, 0, 0)
+
+[node name="Fence9" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -14.1, 0, 0)
+
+[node name="Fence10" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -8.7, 0, 0)
+
+[node name="Fence11" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -3.3, 0, 0)
+
+[node name="Fence12" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 2.1, 0, 0)
+
+[node name="Fence13" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 7.5, 0, 0)
+
+[node name="Fence14" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 12.9, 0, 0)
+
+[node name="Fence15" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 18.3, 0, 0)
+
+[node name="Fence16" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 23.7, 0, 0)
+
+[node name="Fence17" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 29.1, 0, 0)
+
+[node name="Fence18" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 34.5, 0, 0)
+
+[node name="Fence19" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 39.9, 0, 0)
+
+[node name="Fence20" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 45.3, 0, 0)
+
+[node name="Fence21" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 50.7, 0, 0)
+
+[node name="Fence22" parent="Boundary/South" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 56.1, 0, 0)
+
+[node name="West" type="StaticBody3D" parent="Boundary"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Boundary/West"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("Box_bound_z")
+
+[node name="Fence1" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -57.3)
+
+[node name="Fence2" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -51.9)
+
+[node name="Fence3" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -46.5)
+
+[node name="Fence4" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -41.1)
+
+[node name="Fence5" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -35.7)
+
+[node name="Fence6" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -30.3)
+
+[node name="Fence7" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -24.9)
+
+[node name="Fence8" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -19.5)
+
+[node name="Fence9" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -14.1)
+
+[node name="Fence10" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -8.7)
+
+[node name="Fence11" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -3.3)
+
+[node name="Fence12" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 2.1)
+
+[node name="Fence13" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 7.5)
+
+[node name="Fence14" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 12.9)
+
+[node name="Fence15" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 18.3)
+
+[node name="Fence16" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 23.7)
+
+[node name="Fence17" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 29.1)
+
+[node name="Fence18" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 34.5)
+
+[node name="Fence19" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 39.9)
+
+[node name="Fence20" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 45.3)
+
+[node name="Fence21" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 50.7)
+
+[node name="Fence22" parent="Boundary/West" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 56.1)
+
+[node name="East" type="StaticBody3D" parent="Boundary"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Boundary/East"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("Box_bound_z")
+
+[node name="Fence1" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -57.3)
+
+[node name="Fence2" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -51.9)
+
+[node name="Fence3" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -46.5)
+
+[node name="Fence4" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -41.1)
+
+[node name="Fence5" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -35.7)
+
+[node name="Fence6" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -30.3)
+
+[node name="Fence7" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -24.9)
+
+[node name="Fence8" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -19.5)
+
+[node name="Fence9" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -14.1)
+
+[node name="Fence10" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -8.7)
+
+[node name="Fence11" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, -3.3)
+
+[node name="Fence12" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 2.1)
+
+[node name="Fence13" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 7.5)
+
+[node name="Fence14" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 12.9)
+
+[node name="Fence15" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 18.3)
+
+[node name="Fence16" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 23.7)
+
+[node name="Fence17" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 29.1)
+
+[node name="Fence18" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 34.5)
+
+[node name="Fence19" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 39.9)
+
+[node name="Fence20" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 45.3)
+
+[node name="Fence21" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 50.7)
+
+[node name="Fence22" parent="Boundary/East" instance=ExtResource("m2")]
+transform = Transform3D(0, 0, -1.35, 0, 1.35, 0, 1.35, 0, 0, 0, 0, 56.1)
+
+[node name="CornerPillar1" parent="Boundary" instance=ExtResource("m9")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -60, 0, -60)
+
+[node name="CornerPillar2" parent="Boundary" instance=ExtResource("m9")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 60, 0, -60)
+
+[node name="CornerPillar3" parent="Boundary" instance=ExtResource("m9")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -60, 0, 60)
+
+[node name="CornerPillar4" parent="Boundary" instance=ExtResource("m9")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 60, 0, 60)
+
+[node name="Bushes" type="Node3D" parent="."]
+
+[node name="Bush1" type="Node3D" parent="Bushes"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -18)
+script = ExtResource("2_bush")
+size = Vector2(10, 4.5)
+
+[node name="Bush2" type="Node3D" parent="Bushes"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 23)
+script = ExtResource("2_bush")
+size = Vector2(10, 4.5)
+
+[node name="Bush3" type="Node3D" parent="Bushes"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 0, -30)
+script = ExtResource("2_bush")
+size = Vector2(8, 5)
+
+[node name="Bush4" type="Node3D" parent="Bushes"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, -30)
+script = ExtResource("2_bush")
+size = Vector2(8, 5)
+
+[node name="Bush5" type="Node3D" parent="Bushes"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 0, 35)
+script = ExtResource("2_bush")
+size = Vector2(8, 5)
+
+[node name="Bush6" type="Node3D" parent="Bushes"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, 35)
+script = ExtResource("2_bush")
+size = Vector2(8, 5)
+
+[node name="HealZones" type="Node3D" parent="."]
+
+[node name="HealLeft" type="Node3D" parent="HealZones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 0, 2.5)
+script = ExtResource("3_heal")
+team = 0
+
+[node name="HealRight" type="Node3D" parent="HealZones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, 2.5)
+script = ExtResource("3_heal")
+team = 1

@@ -48,7 +48,7 @@ uv1_triplanar = true
 uv1_world_triplanar = true
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_cyt15"]
-size = Vector3(200, 1, 200)
+size = Vector3(120, 1, 120)
 
 [node name="GamePlay" type="Node3D" unique_id=894692585]
 script = ExtResource("1_uxwnf")
@@ -65,7 +65,7 @@ environment = SubResource("Environment_uxwnf")
 [node name="Area" type="StaticBody3D" parent="." unique_id=1570116926 groups=["navigation_geometry"]]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Area" unique_id=481420886]
-transform = Transform3D(50, 0, 0, 0, 50, 0, 0, 0, 50, 0, -25.2132, 0)
+transform = Transform3D(30, 0, 0, 0, 30, 0, 0, 0, 30, 0, -15.2132, 0)
 mesh = SubResource("BoxMesh_uxwnf")
 skeleton = NodePath("../..")
 surface_material_override/0 = SubResource("StandardMaterial3D_hxmeu")
