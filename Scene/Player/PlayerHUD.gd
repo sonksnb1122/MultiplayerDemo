@@ -11,11 +11,11 @@ var detail_speed_label: Node
 func load_GUI():
 	detail_hp_bar = $Panel/hp_bar
 	detail_avatar = $Panel/avatar
-	detail_name_label = $Panel/InfoRow/name_label
-	detail_damage_label = $Panel/InfoRow/damage_label
-	detail_speed_label = $Panel/InfoRow/speed_label
+	detail_name_label = $Panel/name_label
+	detail_damage_label = $Panel/Stats/damage_label
+	detail_speed_label = $Panel/Stats/speed_label
 
-## Where the skill bar (Q W E) is placed: under the hp bar, next to the avatar
+## Where the skill bar (Q W E) is placed. null = its own spot in the bottom-right corner
 func get_skill_area() -> Control:
 	return get_node_or_null("Panel/SkillArea")
 
@@ -54,11 +54,11 @@ func set_status(bbcode: String) -> void:
 		var font = detail_name_label.get_theme_font("font")
 		if font != null:
 			detail_status_label.add_theme_font_override("normal_font", font)
-		detail_status_label.add_theme_font_size_override("normal_font_size", detail_name_label.get_theme_font_size("font_size"))
+		detail_status_label.add_theme_font_size_override("normal_font_size", 14)
 		detail_status_label.add_theme_constant_override("outline_size", 5)
 		detail_status_label.add_theme_color_override("font_outline_color", Color.BLACK)
 		detail_name_label.add_child(detail_status_label)
-	# Just above the HUD panel, so it does not cover the hp bar / stats
-	detail_status_label.position = Vector2(0, -44)
+	# Just below the info panel (top-left corner), so it does not cover the hp bar / stats
+	detail_status_label.position = Vector2(-50, 54)
 	detail_status_label.text = bbcode
 	detail_status_label.visible = not bbcode.is_empty()

@@ -39,50 +39,21 @@ grow_horizontal = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="Label2" type="Label" parent="MarginContainer/Control/HBoxContainer" unique_id=235412460]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(1, 0.696433, 0.29904, 1)
-theme_override_constants/outline_size = 6
-theme_override_fonts/font = ExtResource("2_drgyk")
-theme_override_font_sizes/font_size = 30
-text = "The Light"
-
-[node name="PlayerList" type="HBoxContainer" parent="MarginContainer/Control/HBoxContainer" unique_id=1856492860]
-custom_minimum_size = Vector2(210, 0)
-layout_mode = 2
-
 [node name="TimerLabel" type="Label" parent="MarginContainer/Control/HBoxContainer" unique_id=1169324728]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_drgyk")
 theme_override_font_sizes/font_size = 30
 text = "00:30"
 
-[node name="BossList" type="HBoxContainer" parent="MarginContainer/Control/HBoxContainer" unique_id=1147319048]
-custom_minimum_size = Vector2(210, 0)
-layout_direction = 3
-layout_mode = 2
-
-[node name="Label3" type="Label" parent="MarginContainer/Control/HBoxContainer" unique_id=837935962]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.919596, 0.629269, 0.907405, 1)
-theme_override_constants/outline_size = 6
-theme_override_fonts/font = ExtResource("2_drgyk")
-theme_override_font_sizes/font_size = 30
-text = "The Dark"
-
 [node name="Minimap" type="Control" parent="."]
 layout_mode = 1
-anchors_preset = 3
+anchors_preset = 1
 anchor_left = 1.0
-anchor_top = 1.0
 anchor_right = 1.0
-anchor_bottom = 1.0
 offset_left = -106.0
-offset_top = -106.0
+offset_top = 16.0
 offset_right = -16.0
-offset_bottom = -16.0
+offset_bottom = 106.0
 grow_horizontal = 0
-grow_vertical = 0
 mouse_filter = 2
 script = ExtResource("3_minimap")
