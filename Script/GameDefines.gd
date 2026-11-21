@@ -14,6 +14,22 @@ const COOL_DOWN_START_GAME = 3
 const TIMEOUT_FORCE_SPAWN_HERO = 20
 const COOL_DOWN_FOR_RESPAWN_AFTER_DEAD = 0.5
 
+# --- Match rules (MatchManager) ---
+## Length of a match in seconds
+const MATCH_DURATION = 300
+## First team to reach this score wins
+const SCORE_TO_WIN = 40
+## Points for the team of the killer
+const KILL_SCORE = 2
+## King of the Hill zone in the middle of the arena: 1 point every ZONE_TICK seconds
+const ZONE_CENTER = Vector3(0, 0, 2.5)
+const ZONE_RADIUS = 8.0
+const ZONE_TICK = 4.0
+## Respawn time: RESPAWN_BASE for the first death, + RESPAWN_PER_DEATH for each next one
+const RESPAWN_BASE = 3.0
+const RESPAWN_PER_DEATH = 1.0
+const RESPAWN_MAX = 10.0
+
 const ROOM_SUFFIX_STR = "Room#"
 const PLAYER_SUFFIX_STR = "P#"
 
@@ -52,4 +68,6 @@ enum DisconnectReason {
 	NONE = 0,
 	HOST_CLOSED_ROOM,
 	NETWORK_ISSUE,
+	## Left a finished / broken match: open the room list again
+	BACK_TO_LOBBY,
 }

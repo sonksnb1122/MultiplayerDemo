@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://c4pr3l4xm610g"]
+[gd_scene load_steps=19 format=3 uid="uid://c4pr3l4xm610g"]
 
 [ext_resource type="Script" uid="uid://735ioghm2fcf" path="res://Scene/GamePlay/GamePlay.gd" id="1_uxwnf"]
 [ext_resource type="Script" uid="uid://c20ycpblytupe" path="res://Scene/GamePlay/Camera.gd" id="4_cyt15"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://Scene/PauseMenu/PauseMenu.tscn" id="9_pause"]
 [ext_resource type="PackedScene" path="res://Scene/Loading/LoadingScreen.tscn" id="10_loading"]
 [ext_resource type="PackedScene" path="res://Scene/GamePlay/Arena.tscn" id="11_arena"]
+[ext_resource type="Script" path="res://Scene/GamePlay/MatchManager.gd" id="12_match"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_hxmeu"]
 sky_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
@@ -92,6 +93,9 @@ script = ExtResource("7_bc2dv")
 script = ExtResource("8_5ivyy")
 
 [node name="PlayTimer" type="Timer" parent="GamePlayNetwork" unique_id=684964625]
+
+[node name="MatchManager" type="Node" parent="."]
+script = ExtResource("12_match")
 
 [node name="PauseMenu" parent="." instance=ExtResource("9_pause")]
 

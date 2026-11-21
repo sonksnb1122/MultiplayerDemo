@@ -65,7 +65,7 @@ func _create_skill_bar() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not NetworkManager.is_mine(player.peer_id):
 		return
-	if not player.hero_spawner.is_game_started() or PauseMenu.is_open:
+	if not player.hero_spawner.is_game_started() or PauseMenu.is_open or MatchManager.is_over:
 		return
 	for i in mini(ACTIONS.size(), skills.size()):
 		if event.is_action_pressed(ACTIONS[i]):
@@ -138,7 +138,7 @@ func request_cast(slot: int, target_peer: int, aim_point: Vector3) -> void:
 	if sender != player.peer_id:
 		push_warning("request_cast rejected: peer %d tried to cast for peer %d" % [sender, player.peer_id])
 		return
-	if slot < 0 or slot >= skills.size():
+	if slot < 0 or slot >= skills.size() or MatchManager.is_over:
 		return
 	var skill := skills[slot]
 	if _cooldown_left[slot] > 0.0:
@@ -248,10 +248,10 @@ func _apply_to(target: Player, skill: SkillData) -> void:
 	if skill.slow_duration > 0.0:
 		target.status.apply_slow(skill.slow_percent, skill.slow_duration)
 	if skill.dot_duration > 0.0:
-		target.status.apply_dot(skill.dot_damage, skill.dot_interval, skill.dot_duration)
+		target.status.apply_dot(skill.dot_damage, skill.dot_interval, skill.dot_duration, player.peer_id)
 	var damage := skill.total_damage(player.character_data.damage)
 	if damage > 0:
-		target.take_damage(damage)
+		target.take_damage(damage, player.peer_id)
 
 
 func _fail(slot: int, reason: String) -> void:

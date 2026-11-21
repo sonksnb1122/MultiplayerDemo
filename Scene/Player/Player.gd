@@ -80,6 +80,8 @@ const REPATH_INTERVAL := 0.5
 const REPATH_GOAL_MOVED := 1.0
 ## A path corner counts as reached closer than this
 const WAYPOINT_REACHED := 0.6
+## server: peer_id -> Time.get_ticks_msec() of the last damage from that enemy (kills / assists)
+var damage_log := {}
 var _path := PackedVector3Array()
 var _path_index := 0
 var _path_goal := Vector3.INF
@@ -159,7 +161,7 @@ func init(hero_team_info: Dictionary):
 	
 func _input(event: InputEvent) -> void:
 	if not NetworkManager.is_mine(peer_id): return
-	if PauseMenu.is_open: return
+	if PauseMenu.is_open or MatchManager.is_over: return
 	if hero_spawner.is_game_started():
 		if event.is_action("Moving"):
 			shoot_ray_cast()
@@ -224,12 +226,19 @@ func _physics_process(delta: float) -> void:
 	# only handle physic on server
 	if not multiplayer.is_server(): return
 	
-	if !is_on_floor():
+	# No gravity while dead: the collision shape is off, the hero would fall through the ground
+	if !is_on_floor() and not is_dead():
 		velocity += get_gravity()*delta
 		velocity.x = move_toward(velocity.x, 0, character_data.movement_speed)
 		velocity.z = move_toward(velocity.z, 0, character_data.movement_speed)
 		move_and_slide()
 	_sync_transform_to_clients(delta)
+
+	# Match over: everyone stands still
+	if MatchManager.is_over:
+		if player_state != PlayerState.WAITING_FOR_RESPAWN:
+			_send_animation("idle")
+		return
 		
 	if player_state == PlayerState.WAITING_FOR_RESPAWN: return
 
@@ -257,9 +266,11 @@ func _physics_process(delta: float) -> void:
 		attack_cooldown += delta
 	if player_state == PlayerState.MOVING:
 		move_to_target(target_position)
-	elif player_state == PlayerState.ATTACK and not is_instance_valid(target_attack):
-		# The target left the game
+	elif player_state == PlayerState.ATTACK and (not is_instance_valid(target_attack) or not target_attack is Player or target_attack.is_dead()):
+		# The target died or left the game: stop attacking, wait for the next order
 		player_state = PlayerState.IDLE
+		target_attack = null
+		_clear_path()
 		_send_animation("idle")
 	elif player_state == PlayerState.ATTACK:		
 		if (target_attack.position - global_position).length() > character_data.attack_range or not has_line_of_fire(target_attack):
@@ -296,9 +307,9 @@ func perform_attack() -> void:
 			play_basic_attack_fx.rpc(target.peer_id, travel, false, Vector3.ZERO)
 			get_tree().create_timer(travel).timeout.connect(func() -> void:
 				if is_instance_valid(target) and not target.is_dead() and not is_dead():
-					target.take_damage(dmg))
+					target.take_damage(dmg, peer_id))
 		else:
-			target_attack.take_damage(dmg)
+			target_attack.take_damage(dmg, peer_id)
 
 ## Server: where a shot from this hero to [param target] (chest height) hits a prop, or Vector3.INF
 func shot_block_point(target: Node3D, height := BasicAttackFx.HEIGHT) -> Vector3:
@@ -408,7 +419,8 @@ func _process(delta: float) -> void:
 	var weight := 1.0 - exp(-CLIENT_SMOOTHING * delta)
 	global_position = global_position.lerp(_net_target_pos, weight)
 
-func take_damage(dmg: int) -> void:
+## Server. [param attacker_peer]: hero who dealt it (0 = unknown), for kills / assists / stats
+func take_damage(dmg: int, attacker_peer := 0) -> void:
 	if not multiplayer.is_server(): return
 	if is_dead(): return
 	# Shield (Bubble Shock) absorbs first
@@ -419,7 +431,20 @@ func take_damage(dmg: int) -> void:
 		# recaculate extractly dame taken
 		dmg = dmg + current_hp
 		current_hp = 0
+	var match_manager := _match_manager()
+	if attacker_peer != 0 and attacker_peer != peer_id:
+		damage_log[attacker_peer] = Time.get_ticks_msec()
+		if match_manager != null:
+			match_manager.on_damage(attacker_peer, dmg)
+	# Before set_current_hp: it starts the respawn timer, whose length depends on the deaths count
+	if current_hp <= 0 and match_manager != null:
+		match_manager.on_hero_killed(self, attacker_peer)
 	set_current_hp.rpc(peer_id, dmg, current_hp)	
+
+func _match_manager() -> MatchManager:
+	var scene := get_tree().current_scene
+	if scene == null: return null
+	return scene.get_node_or_null("MatchManager") as MatchManager
 	
 func handle_player_dead():
 	if not multiplayer.is_server(): return
@@ -430,7 +455,8 @@ func handle_player_dead():
 	cast_time_left = 0.0
 	cast_serial += 1
 	status.clear_all()
-	respawn_timer.wait_time = GameDefines.COOL_DOWN_FOR_RESPAWN_AFTER_DEAD
+	var match_manager := _match_manager()
+	respawn_timer.wait_time = match_manager.respawn_time_for(peer_id) if match_manager != null else GameDefines.COOL_DOWN_FOR_RESPAWN_AFTER_DEAD
 	respawn_timer.start()
 	
 func _on_timer_respawn_timeout():
@@ -476,8 +502,17 @@ func set_current_hp(object_target_peer_id: int, damage_take: int, current_hp_aft
 	current_hp = current_hp_after_take_dmg
 	hp_bar.value = current_hp
 	_refresh_hp_bar()
+	# Dead: hidden and not solid until the respawn (trigger_respawn sets the hp back > 0)
+	_set_alive_visual(current_hp > 0)
 	if current_hp <= 0:
 		handle_player_dead()
+
+## Every peer: show / hide the hero (model, hp bar) and turn its collisions on / off
+func _set_alive_visual(alive: bool) -> void:
+	$character.visible = alive
+	$hp_bar.visible = alive
+	$CollisionShape3D.set_deferred("disabled", not alive)
+	$ClickArea/CollisionShape3D.set_deferred("disabled", not alive)
 
 @rpc("authority", "call_local", "reliable")
 func trigger_animation(object_target_peer_id: int, animation_name: String):
@@ -546,7 +581,7 @@ func hero_clicked(peer_id_object_clicked: int):
 	else:
 		print("hero_clicked: not found the hero with peer_id = " + str(peer_id_object_clicked))
 		
-	if hero_is_clicked == null: return
+	if hero_is_clicked == null or hero_is_clicked.is_dead(): return
 	if hero_is_clicked.team_side != team_side:
 		target_attack = hero_is_clicked
 		target_position = hero_is_clicked.position

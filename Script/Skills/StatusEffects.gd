@@ -94,10 +94,11 @@ func apply_slow(percent: float, duration: float) -> void:
 	_dirty = true
 
 
-func apply_dot(damage: int, interval: float, duration: float) -> void:
+## [param source_peer]: hero who applied it (gets the kill / damage stats)
+func apply_dot(damage: int, interval: float, duration: float, source_peer := 0) -> void:
 	if damage <= 0 or duration <= 0.0:
 		return
-	_dots.append({"damage": damage, "interval": maxf(interval, 0.1), "tick": 0.0, "left": duration})
+	_dots.append({"damage": damage, "interval": maxf(interval, 0.1), "tick": 0.0, "left": duration, "source": source_peer})
 	_dirty = true
 
 
@@ -182,12 +183,14 @@ func _process(delta: float) -> void:
 	# Damage over time: add everything up first, deal it once at the end
 	# (taking damage can kill the hero, which clears _dots).
 	var dot_total := 0
+	var dot_source := 0
 	for dot in _dots:
 		dot["tick"] += delta
 		dot["left"] -= delta
 		while dot["tick"] >= dot["interval"]:
 			dot["tick"] -= dot["interval"]
 			dot_total += int(dot["damage"])
+			dot_source = int(dot.get("source", 0))
 	var before := _dots.size()
 	_dots = _dots.filter(func(d: Dictionary) -> bool: return d["left"] > 0.0)
 	if _dots.size() != before:
@@ -195,7 +198,7 @@ func _process(delta: float) -> void:
 
 	_sync()
 	if dot_total > 0 and player != null:
-		player.take_damage(dot_total)
+		player.take_damage(dot_total, dot_source)
 
 
 func _tick(value: float, delta: float) -> float:

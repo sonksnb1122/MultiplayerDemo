@@ -55,6 +55,18 @@ func _draw() -> void:
 	draw_line(Vector2(size.x * 0.5, 0), Vector2(size.x * 0.5, size.y), Color(1, 1, 1, 0.15), 1.0)
 	draw_rect(rect, COLOR_BORDER, false, 2.0)
 
+	# King of the Hill zone, in the color of who holds it
+	var scene := get_tree().current_scene
+	var match_manager: MatchManager = null
+	if scene != null:
+		match_manager = scene.get_node_or_null("MatchManager") as MatchManager
+	if match_manager != null:
+		var c := match_manager.zone_color()
+		var center := _world_to_map(GameDefines.ZONE_CENTER)
+		var r := GameDefines.ZONE_RADIUS / (world_half_size * 2.0) * size.x
+		draw_circle(center, r, Color(c.r, c.g, c.b, 0.25))
+		draw_arc(center, r, 0, TAU, 24, c, 1.0)
+
 	# Props (walls, barrels...) as grey blocks
 	for obstacle in get_tree().get_nodes_in_group("minimap_obstacle"):
 		var o := obstacle as Node3D
