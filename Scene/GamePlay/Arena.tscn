@@ -1,0 +1,598 @@
+[gd_scene load_steps=32 format=3]
+
+[ext_resource type="Script" path="res://Scene/GamePlay/ArenaNavigation.gd" id="1_nav"]
+[ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/barrel_large.gltf" id="m0"]
+[ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/barrel_small_stack.gltf" id="m1"]
+[ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/barrier.gltf" id="m2"]
+[ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/barrier_column.gltf" id="m3"]
+[ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/box_large.gltf" id="m4"]
+[ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/box_stacked.gltf" id="m5"]
+[ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/chest_gold.gltf" id="m6"]
+[ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/crates_stacked.gltf" id="m7"]
+[ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/keg.gltf" id="m8"]
+[ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/pillar.gltf" id="m9"]
+[ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/pillar_decorated.gltf" id="m10"]
+[ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/rubble_large.gltf" id="m11"]
+[ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/wall.gltf" id="m12"]
+[ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/wall_broken.gltf" id="m13"]
+[ext_resource type="PackedScene" path="res://Asset/Environment/KayKit_Dungeon/floor_tile_large.gltf" id="m14"]
+
+[sub_resource type="BoxShape3D" id="Box_barrel_large"]
+size = Vector3(2.0655, 2.7, 2.0655)
+
+[sub_resource type="BoxShape3D" id="Box_barrel_small_stack"]
+size = Vector3(2.123, 2.3897, 1.1475)
+
+[sub_resource type="BoxShape3D" id="Box_barrier"]
+size = Vector3(4.59, 1.485, 0.5737)
+
+[sub_resource type="BoxShape3D" id="Box_barrier_column"]
+size = Vector3(4.59, 1.89, 0.8032)
+
+[sub_resource type="BoxShape3D" id="Box_box_large"]
+size = Vector3(1.7212, 2.025, 1.7212)
+
+[sub_resource type="BoxShape3D" id="Box_box_stacked"]
+size = Vector3(3.9879, 4.467, 4.1709)
+
+[sub_resource type="BoxShape3D" id="Box_chest_gold"]
+size = Vector3(1.9507, 1.755, 1.659)
+
+[sub_resource type="BoxShape3D" id="Box_crates_stacked"]
+size = Vector3(2.3973, 2.8921, 2.5812)
+
+[sub_resource type="BoxShape3D" id="Box_keg"]
+size = Vector3(2.0655, 2.7685, 2.295)
+
+[sub_resource type="BoxShape3D" id="Box_pillar"]
+size = Vector3(1.7212, 5.4, 1.7212)
+
+[sub_resource type="BoxShape3D" id="Box_pillar_decorated"]
+size = Vector3(2.5612, 5.4, 1.9624)
+
+[sub_resource type="BoxShape3D" id="Box_rubble_large"]
+size = Vector3(9.3283, 4.7197, 3.6526)
+
+[sub_resource type="BoxShape3D" id="Box_wall"]
+size = Vector3(4.59, 5.4, 1.1475)
+
+[sub_resource type="BoxShape3D" id="Box_wall_broken"]
+size = Vector3(4.59, 5.4, 1.1475)
+
+[sub_resource type="NavigationMesh" id="NavMesh_arena"]
+geometry_parsed_geometry_type = 1
+geometry_source_geometry_mode = 1
+geometry_source_group_name = &"navigation_geometry"
+cell_size = 0.25
+cell_height = 0.25
+agent_height = 3.0
+agent_radius = 1.0
+agent_max_climb = 0.3
+filter_baking_aabb = AABB(-100, -2, -100, 200, 12, 200)
+
+[node name="Arena" type="NavigationRegion3D"]
+navigation_mesh = SubResource("NavMesh_arena")
+script = ExtResource("1_nav")
+
+[node name="Floor" type="Node3D" parent="."]
+
+[node name="Tile1" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -10.8, 0, -8.3)
+
+[node name="Tile2" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -10.8, 0, -2.9)
+
+[node name="Tile3" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -10.8, 0, 2.5)
+
+[node name="Tile4" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -10.8, 0, 7.9)
+
+[node name="Tile5" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -10.8, 0, 13.3)
+
+[node name="Tile6" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -5.4, 0, -8.3)
+
+[node name="Tile7" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -5.4, 0, -2.9)
+
+[node name="Tile8" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -5.4, 0, 2.5)
+
+[node name="Tile9" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -5.4, 0, 7.9)
+
+[node name="Tile10" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, -5.4, 0, 13.3)
+
+[node name="Tile11" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, -8.3)
+
+[node name="Tile12" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, -2.9)
+
+[node name="Tile13" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 2.5)
+
+[node name="Tile14" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 7.9)
+
+[node name="Tile15" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 13.3)
+
+[node name="Tile16" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 5.4, 0, -8.3)
+
+[node name="Tile17" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 5.4, 0, -2.9)
+
+[node name="Tile18" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 5.4, 0, 2.5)
+
+[node name="Tile19" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 5.4, 0, 7.9)
+
+[node name="Tile20" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 5.4, 0, 13.3)
+
+[node name="Tile21" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 10.8, 0, -8.3)
+
+[node name="Tile22" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 10.8, 0, -2.9)
+
+[node name="Tile23" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 10.8, 0, 2.5)
+
+[node name="Tile24" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 10.8, 0, 7.9)
+
+[node name="Tile25" parent="Floor" instance=ExtResource("m14")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 10.8, 0, 13.3)
+
+[node name="Props" type="Node3D" parent="." groups=["navigation_geometry"]]
+
+[node name="pillar_1" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -7.5)
+collision_layer = 5
+metadata/minimap_size = Vector2(2.025, 2.025)
+
+[node name="Model" parent="Props/pillar_1" instance=ExtResource("m9")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/pillar_1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0, 2.7, 0)
+shape = SubResource("Box_pillar")
+
+[node name="pillar_2" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -7.5)
+collision_layer = 5
+metadata/minimap_size = Vector2(2.025, 2.025)
+
+[node name="Model" parent="Props/pillar_2" instance=ExtResource("m9")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/pillar_2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0, 2.7, 0)
+shape = SubResource("Box_pillar")
+
+[node name="pillar_3" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 12.5)
+collision_layer = 5
+metadata/minimap_size = Vector2(2.025, 2.025)
+
+[node name="Model" parent="Props/pillar_3" instance=ExtResource("m9")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/pillar_3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0, 2.7, 0)
+shape = SubResource("Box_pillar")
+
+[node name="pillar_4" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 12.5)
+collision_layer = 5
+metadata/minimap_size = Vector2(2.025, 2.025)
+
+[node name="Model" parent="Props/pillar_4" instance=ExtResource("m9")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/pillar_4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0, 2.7, 0)
+shape = SubResource("Box_pillar")
+
+[node name="barrier_column_1" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0, -9)
+collision_layer = 5
+metadata/minimap_size = Vector2(5.4, 0.945)
+
+[node name="Model" parent="Props/barrier_column_1" instance=ExtResource("m3")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/barrier_column_1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.945, 0)
+shape = SubResource("Box_barrier_column")
+
+[node name="barrier_column_2" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, -9)
+collision_layer = 5
+metadata/minimap_size = Vector2(5.4, 0.945)
+
+[node name="Model" parent="Props/barrier_column_2" instance=ExtResource("m3")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/barrier_column_2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.945, 0)
+shape = SubResource("Box_barrier_column")
+
+[node name="barrier_column_3" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0, 14)
+collision_layer = 5
+metadata/minimap_size = Vector2(5.4, 0.945)
+
+[node name="Model" parent="Props/barrier_column_3" instance=ExtResource("m3")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/barrier_column_3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.945, 0)
+shape = SubResource("Box_barrier_column")
+
+[node name="barrier_column_4" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 14)
+collision_layer = 5
+metadata/minimap_size = Vector2(5.4, 0.945)
+
+[node name="Model" parent="Props/barrier_column_4" instance=ExtResource("m3")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/barrier_column_4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.945, 0)
+shape = SubResource("Box_barrier_column")
+
+[node name="crates_stacked_1" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 0, 2.5)
+collision_layer = 5
+metadata/minimap_size = Vector2(2.8204, 3.0367)
+
+[node name="Model" parent="Props/crates_stacked_1" instance=ExtResource("m7")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/crates_stacked_1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0613, 1.446, -0.0439)
+shape = SubResource("Box_crates_stacked")
+
+[node name="crates_stacked_2" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0, 2.5)
+collision_layer = 5
+metadata/minimap_size = Vector2(2.8204, 3.0367)
+
+[node name="Model" parent="Props/crates_stacked_2" instance=ExtResource("m7")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/crates_stacked_2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0613, 1.446, -0.0439)
+shape = SubResource("Box_crates_stacked")
+
+[node name="barrel_large_1" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -20)
+collision_layer = 5
+metadata/minimap_size = Vector2(2.43, 2.43)
+
+[node name="Model" parent="Props/barrel_large_1" instance=ExtResource("m0")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/barrel_large_1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0, 1.35, 0)
+shape = SubResource("Box_barrel_large")
+
+[node name="barrel_large_2" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, -20)
+collision_layer = 5
+metadata/minimap_size = Vector2(2.43, 2.43)
+
+[node name="Model" parent="Props/barrel_large_2" instance=ExtResource("m0")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/barrel_large_2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0, 1.35, 0)
+shape = SubResource("Box_barrel_large")
+
+[node name="barrel_small_stack_1" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(0.866, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866, -18, 0, -21.5)
+collision_layer = 5
+metadata/minimap_size = Vector2(2.8381, 2.418)
+
+[node name="Model" parent="Props/barrel_small_stack_1" instance=ExtResource("m1")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/barrel_small_stack_1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0, 1.1948, 0)
+shape = SubResource("Box_barrel_small_stack")
+
+[node name="barrel_small_stack_2" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(0.866, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866, 18, 0, -21.5)
+collision_layer = 5
+metadata/minimap_size = Vector2(2.8381, 2.418)
+
+[node name="Model" parent="Props/barrel_small_stack_2" instance=ExtResource("m1")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/barrel_small_stack_2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0, 1.1948, 0)
+shape = SubResource("Box_barrel_small_stack")
+
+[node name="box_stacked_1" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, 26)
+collision_layer = 5
+metadata/minimap_size = Vector2(4.6916, 4.9069)
+
+[node name="Model" parent="Props/box_stacked_1" instance=ExtResource("m5")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/box_stacked_1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0172, 2.2335, 0.0593)
+shape = SubResource("Box_box_stacked")
+
+[node name="box_stacked_2" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 26)
+collision_layer = 5
+metadata/minimap_size = Vector2(4.6916, 4.9069)
+
+[node name="Model" parent="Props/box_stacked_2" instance=ExtResource("m5")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/box_stacked_2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0172, 2.2335, 0.0593)
+shape = SubResource("Box_box_stacked")
+
+[node name="keg_1" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27, 0, 24)
+collision_layer = 5
+metadata/minimap_size = Vector2(2.43, 2.7)
+
+[node name="Model" parent="Props/keg_1" instance=ExtResource("m8")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/keg_1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0, 1.3842, 0.0329)
+shape = SubResource("Box_keg")
+
+[node name="keg_2" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27, 0, 24)
+collision_layer = 5
+metadata/minimap_size = Vector2(2.43, 2.7)
+
+[node name="Model" parent="Props/keg_2" instance=ExtResource("m8")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/keg_2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0, 1.3842, 0.0329)
+shape = SubResource("Box_keg")
+
+[node name="box_large_1" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(0.9397, 0, -0.342, 0, 1, 0, 0.342, 0, 0.9397, -23.5, 0, 27)
+collision_layer = 5
+metadata/minimap_size = Vector2(2.5955, 2.5955)
+
+[node name="Model" parent="Props/box_large_1" instance=ExtResource("m4")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/box_large_1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0125, 0)
+shape = SubResource("Box_box_large")
+
+[node name="box_large_2" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(0.9397, 0, 0.342, 0, 1, 0, -0.342, 0, 0.9397, 23.5, 0, 27)
+collision_layer = 5
+metadata/minimap_size = Vector2(2.5955, 2.5955)
+
+[node name="Model" parent="Props/box_large_2" instance=ExtResource("m4")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/box_large_2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0125, 0)
+shape = SubResource("Box_box_large")
+
+[node name="wall_1" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -33, 0, -16)
+collision_layer = 5
+metadata/minimap_size = Vector2(1.35, 5.4)
+
+[node name="Model" parent="Props/wall_1" instance=ExtResource("m12")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/wall_1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, 0)
+shape = SubResource("Box_wall")
+
+[node name="wall_2" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 33, 0, -16)
+collision_layer = 5
+metadata/minimap_size = Vector2(1.35, 5.4)
+
+[node name="Model" parent="Props/wall_2" instance=ExtResource("m12")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/wall_2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, 0)
+shape = SubResource("Box_wall")
+
+[node name="wall_broken_1" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -33, 0, 21)
+collision_layer = 5
+metadata/minimap_size = Vector2(1.35, 5.4)
+
+[node name="Model" parent="Props/wall_broken_1" instance=ExtResource("m13")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/wall_broken_1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, 0)
+shape = SubResource("Box_wall_broken")
+
+[node name="wall_broken_2" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 33, 0, 21)
+collision_layer = 5
+metadata/minimap_size = Vector2(1.35, 5.4)
+
+[node name="Model" parent="Props/wall_broken_2" instance=ExtResource("m13")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/wall_broken_2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, 0)
+shape = SubResource("Box_wall_broken")
+
+[node name="rubble_large_1" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.5, 0, -32)
+collision_layer = 5
+metadata/minimap_size = Vector2(10.9745, 4.2972)
+
+[node name="Model" parent="Props/rubble_large_1" instance=ExtResource("m11")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/rubble_large_1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0057, 2.3599, 0.008)
+shape = SubResource("Box_rubble_large")
+
+[node name="rubble_large_2" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 0, -32)
+collision_layer = 5
+metadata/minimap_size = Vector2(10.9745, 4.2972)
+
+[node name="Model" parent="Props/rubble_large_2" instance=ExtResource("m11")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/rubble_large_2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0057, 2.3599, 0.008)
+shape = SubResource("Box_rubble_large")
+
+[node name="rubble_large_3" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.5, 0, 37)
+collision_layer = 5
+metadata/minimap_size = Vector2(10.9745, 4.2972)
+
+[node name="Model" parent="Props/rubble_large_3" instance=ExtResource("m11")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/rubble_large_3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0057, 2.3599, 0.008)
+shape = SubResource("Box_rubble_large")
+
+[node name="rubble_large_4" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 0, 37)
+collision_layer = 5
+metadata/minimap_size = Vector2(10.9745, 4.2972)
+
+[node name="Model" parent="Props/rubble_large_4" instance=ExtResource("m11")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/rubble_large_4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0057, 2.3599, 0.008)
+shape = SubResource("Box_rubble_large")
+
+[node name="pillar_decorated_1" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 0, -8)
+collision_layer = 5
+metadata/minimap_size = Vector2(3.0132, 2.3087)
+
+[node name="Model" parent="Props/pillar_decorated_1" instance=ExtResource("m10")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/pillar_decorated_1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, 0.1419)
+shape = SubResource("Box_pillar_decorated")
+
+[node name="pillar_decorated_2" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 0, -8)
+collision_layer = 5
+metadata/minimap_size = Vector2(3.0132, 2.3087)
+
+[node name="Model" parent="Props/pillar_decorated_2" instance=ExtResource("m10")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/pillar_decorated_2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, 0.1419)
+shape = SubResource("Box_pillar_decorated")
+
+[node name="pillar_decorated_3" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 0, 13)
+collision_layer = 5
+metadata/minimap_size = Vector2(3.0132, 2.3087)
+
+[node name="Model" parent="Props/pillar_decorated_3" instance=ExtResource("m10")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/pillar_decorated_3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, 0.1419)
+shape = SubResource("Box_pillar_decorated")
+
+[node name="pillar_decorated_4" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 0, 13)
+collision_layer = 5
+metadata/minimap_size = Vector2(3.0132, 2.3087)
+
+[node name="Model" parent="Props/pillar_decorated_4" instance=ExtResource("m10")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/pillar_decorated_4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, 0.1419)
+shape = SubResource("Box_pillar_decorated")
+
+[node name="barrier_1" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42, 0, -16)
+collision_layer = 5
+metadata/minimap_size = Vector2(5.4, 0.675)
+
+[node name="Model" parent="Props/barrier_1" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/barrier_1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7425, 0)
+shape = SubResource("Box_barrier")
+
+[node name="barrier_2" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 0, -16)
+collision_layer = 5
+metadata/minimap_size = Vector2(5.4, 0.675)
+
+[node name="Model" parent="Props/barrier_2" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/barrier_2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7425, 0)
+shape = SubResource("Box_barrier")
+
+[node name="barrier_3" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42, 0, 21)
+collision_layer = 5
+metadata/minimap_size = Vector2(5.4, 0.675)
+
+[node name="Model" parent="Props/barrier_3" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/barrier_3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7425, 0)
+shape = SubResource("Box_barrier")
+
+[node name="barrier_4" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 0, 21)
+collision_layer = 5
+metadata/minimap_size = Vector2(5.4, 0.675)
+
+[node name="Model" parent="Props/barrier_4" instance=ExtResource("m2")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/barrier_4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7425, 0)
+shape = SubResource("Box_barrier")
+
+[node name="chest_gold_1" type="StaticBody3D" parent="Props" groups=["minimap_obstacle"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.5)
+collision_layer = 5
+metadata/minimap_size = Vector2(2.295, 1.9518)
+
+[node name="Model" parent="Props/chest_gold_1" instance=ExtResource("m6")]
+transform = Transform3D(1.35, 0, 0, 0, 1.35, 0, 0, 0, 1.35, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/chest_gold_1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8775, 0.0309)
+shape = SubResource("Box_chest_gold")

@@ -73,6 +73,17 @@ var _last_sent_pos := Vector3.INF
 var _last_sent_dir := Vector3.ZERO
 var _pos_send_timer := 0.0
 var _heartbeat_timer := 0.0
+# server: path following (NavigationServer3D, baked by ArenaNavigation)
+## A new path is asked for at least this often while moving (the target may move, or we got pushed)
+const REPATH_INTERVAL := 0.5
+## ...and at once when the goal moved more than this since the last path
+const REPATH_GOAL_MOVED := 1.0
+## A path corner counts as reached closer than this
+const WAYPOINT_REACHED := 0.6
+var _path := PackedVector3Array()
+var _path_index := 0
+var _path_goal := Vector3.INF
+var _repath_timer := 0.0
 # client: position received from the server, drawn smoothly in _process
 var _net_target_pos := Vector3.ZERO
 var _has_net_target := false
@@ -163,9 +174,14 @@ func mouse_raycast(exclude_self := false) -> Dictionary:
 	var query = PhysicsRayQueryParameters3D.new()
 	query.from = from
 	query.to = to
+	# The hero's body is slim (to walk between props); clicks use the bigger ClickArea around it
+	query.collide_with_areas = true
 	if exclude_self:
-		query.exclude = [get_rid()]
-	return space.intersect_ray(query)
+		query.exclude = [get_rid(), $ClickArea.get_rid()]
+	var hit := space.intersect_ray(query)
+	if not hit.is_empty() and hit["collider"] is Area3D and hit["collider"].get_parent() is Player:
+		hit["collider"] = hit["collider"].get_parent()
+	return hit
 
 func shoot_ray_cast():
 	#using ray cast to detect position cursor point at
@@ -246,7 +262,7 @@ func _physics_process(delta: float) -> void:
 		player_state = PlayerState.IDLE
 		_send_animation("idle")
 	elif player_state == PlayerState.ATTACK:		
-		if (target_attack.position - global_position).length() > character_data.attack_range:
+		if (target_attack.position - global_position).length() > character_data.attack_range or not has_line_of_fire(target_attack):
 			_send_animation("moving")
 			move_to_target(target_attack.position)
 		else: 
@@ -269,36 +285,86 @@ func perform_attack() -> void:
 			# Ranged: show the projectile everywhere, deal the damage when it lands
 			var target: Player = target_attack
 			var dist := (target.global_position - global_position).length()
+			# A prop in the way stops the shot there: no damage
+			var block := shot_block_point(target)
+			if block != Vector3.INF:
+				var to_block := Vector2(block.x - global_position.x, block.z - global_position.z).length()
+				var block_travel := maxf(to_block / BasicAttackFx.speed_of(character_data.id), 0.05)
+				play_basic_attack_fx.rpc(target.peer_id, block_travel, true, block)
+				return
 			var travel := maxf(dist / BasicAttackFx.speed_of(character_data.id), 0.05)
-			play_basic_attack_fx.rpc(target.peer_id, travel)
+			play_basic_attack_fx.rpc(target.peer_id, travel, false, Vector3.ZERO)
 			get_tree().create_timer(travel).timeout.connect(func() -> void:
 				if is_instance_valid(target) and not target.is_dead() and not is_dead():
 					target.take_damage(dmg))
 		else:
 			target_attack.take_damage(dmg)
 
+## Server: where a shot from this hero to [param target] (chest height) hits a prop, or Vector3.INF
+func shot_block_point(target: Node3D, height := BasicAttackFx.HEIGHT) -> Vector3:
+	var up := Vector3(0, height, 0)
+	return Obstacles.first_hit(get_world_3d(), global_position + up, target.global_position + up)
+
+## Melee heroes always may hit; ranged ones need no prop between them and the target
+func has_line_of_fire(target: Node3D) -> bool:
+	if not BasicAttackFx.has_projectile(character_data.id): return true
+	return shot_block_point(target) == Vector3.INF
+
 func get_move_speed() -> float:
 	return character_data.movement_speed * status.move_speed_multiplier()
 
 func move_to_target(target: Vector3):
-	var direction = (target - global_transform.origin).normalized()
 	var speed = get_move_speed()
-	if (target - global_position).length() > GameDefines.STOP_DISTANCE:
-		if direction:
+	var waypoint := _next_waypoint(target)
+	# Stop at the goal, or at the end of the path when the goal itself can't be reached
+	# (clicked inside a prop): the path then ends at the closest reachable point.
+	var end_point := target if _path.is_empty() else _path[_path.size() - 1]
+	if _flat_distance(end_point, global_position) > GameDefines.STOP_DISTANCE:
+		var direction := waypoint - global_position
+		direction.y = 0.0
+		if direction.length() > 0.001:
+			direction = direction.normalized()
 			velocity.x = direction.x * speed
 			velocity.z = direction.z * speed
+			_send_direction(Vector3(waypoint.x, position.y, waypoint.z))
 		else:
 			velocity.x = move_toward(velocity.x, 0, speed)
 			velocity.z = move_toward(velocity.z, 0, speed)
-		if target:
-			var lookAtVector = Vector3(target.x, position.y, target.z)
-			_send_direction(lookAtVector)
-		
 		_send_animation("moving")
 		move_and_slide()
 	else:
+		_clear_path()
 		_send_animation("idle")
 		player_state = PlayerState.IDLE
+
+func _flat_distance(a: Vector3, b: Vector3) -> float:
+	return Vector2(a.x - b.x, a.z - b.z).length()
+
+func _clear_path() -> void:
+	_path = PackedVector3Array()
+	_path_index = 0
+	_path_goal = Vector3.INF
+
+## Next corner of the path around the props toward [param goal]. Straight line when there is
+## no navigation mesh yet (still baking) or no path was found.
+func _next_waypoint(goal: Vector3) -> Vector3:
+	_repath_timer -= get_physics_process_delta_time()
+	if _path.is_empty() or _repath_timer <= 0.0 or _flat_distance(_path_goal, goal) > REPATH_GOAL_MOVED:
+		_repath_timer = REPATH_INTERVAL
+		_path_goal = goal
+		_path_index = 0
+		_path = PackedVector3Array()
+		var nav_map := get_world_3d().navigation_map
+		if NavigationServer3D.map_get_iteration_id(nav_map) > 0:
+			_path = NavigationServer3D.map_get_path(nav_map, global_position, goal, true)
+			# The first point is where we stand: skip it
+			if _path.size() > 1:
+				_path_index = 1
+	if _path.is_empty():
+		return goal
+	while _path_index < _path.size() - 1 and _flat_distance(_path[_path_index], global_position) < WAYPOINT_REACHED:
+		_path_index += 1
+	return _path[_path_index]
 
 # --- NETWORK SYNC (server) ---
 # Animation/direction are sent only when they change; position at POSITION_SEND_RATE on its own
@@ -463,7 +529,9 @@ func position_clicked(mouse_position: Vector3):
 	if not multiplayer.is_server(): return
 	if not _is_sender_owner("position_clicked"): return
 	if is_dead(): return
-	target_position = mouse_position
+	# On the ground: a click on top of a prop must not aim at its roof
+	target_position = Vector3(mouse_position.x, 0.0, mouse_position.z)
+	_clear_path()
 	_set_order(PlayerState.MOVING)
 	
 @rpc("any_peer", "call_local", "unreliable_ordered")
@@ -563,7 +631,8 @@ func _end_cast() -> void:
 
 ## Visual only: the basic-attack projectile of a ranged hero (damage is applied by the server)
 @rpc("authority", "call_local", "reliable")
-func play_basic_attack_fx(target_peer: int, travel_time: float) -> void:
+## [param blocked]: the shot hits a prop at [param block_point] instead of the target
+func play_basic_attack_fx(target_peer: int, travel_time: float, blocked: bool, block_point: Vector3) -> void:
 	if not (hero_spawner is HeroSpawner): return
 	var target := hero_spawner.get_player(target_peer) as Node3D
 	var world := get_tree().current_scene
@@ -571,11 +640,16 @@ func play_basic_attack_fx(target_peer: int, travel_time: float) -> void:
 	var start := global_position + facing_direction() * BasicAttackFx.FORWARD_OFFSET + Vector3(0, BasicAttackFx.HEIGHT, 0)
 	var projectile := BasicAttackFx.create(character_data.id, start, target, travel_time)
 	if projectile == null: return
+	if blocked:
+		projectile.set_end_point(block_point)
 	world.add_child(projectile)
 	projectile.global_position = start
 	var hero_id := character_data.id
 	get_tree().create_timer(travel_time).timeout.connect(func() -> void:
-		if is_instance_valid(target) and is_instance_valid(world):
+		if not is_instance_valid(world): return
+		if blocked:
+			BasicAttackFx.spawn_impact(world, block_point, hero_id)
+		elif is_instance_valid(target):
 			BasicAttackFx.spawn_impact(world, target.global_position + Vector3(0, BasicAttackFx.HEIGHT, 0), hero_id))
 
 @rpc("authority", "call_local", "reliable")

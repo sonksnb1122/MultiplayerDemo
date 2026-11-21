@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://c4pr3l4xm610g"]
+[gd_scene load_steps=18 format=3 uid="uid://c4pr3l4xm610g"]
 
 [ext_resource type="Script" uid="uid://735ioghm2fcf" path="res://Scene/GamePlay/GamePlay.gd" id="1_uxwnf"]
 [ext_resource type="Script" uid="uid://c20ycpblytupe" path="res://Scene/GamePlay/Camera.gd" id="4_cyt15"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://3kld0greicae" path="res://Scene/GamePlay/GamePlayNetwork.gd" id="8_5ivyy"]
 [ext_resource type="PackedScene" path="res://Scene/PauseMenu/PauseMenu.tscn" id="9_pause"]
 [ext_resource type="PackedScene" path="res://Scene/Loading/LoadingScreen.tscn" id="10_loading"]
+[ext_resource type="PackedScene" path="res://Scene/GamePlay/Arena.tscn" id="11_arena"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_hxmeu"]
 sky_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
@@ -46,7 +47,7 @@ uv1_triplanar = true
 uv1_world_triplanar = true
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_cyt15"]
-size = Vector3(4, 0, 4)
+size = Vector3(200, 1, 200)
 
 [node name="GamePlay" type="Node3D" unique_id=894692585]
 script = ExtResource("1_uxwnf")
@@ -60,7 +61,7 @@ directional_shadow_max_distance = 90.0
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1106443691]
 environment = SubResource("Environment_uxwnf")
 
-[node name="Area" type="StaticBody3D" parent="." unique_id=1570116926]
+[node name="Area" type="StaticBody3D" parent="." unique_id=1570116926 groups=["navigation_geometry"]]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Area" unique_id=481420886]
 transform = Transform3D(50, 0, 0, 0, 50, 0, 0, 0, 50, 0, -25.2132, 0)
@@ -69,8 +70,10 @@ skeleton = NodePath("../..")
 surface_material_override/0 = SubResource("StandardMaterial3D_hxmeu")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Area" unique_id=357097539]
-transform = Transform3D(50, 0, 0, 0, 50, 0, 0, 0, 50, 0, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 shape = SubResource("BoxShape3D_cyt15")
+
+[node name="Arena" parent="." instance=ExtResource("11_arena")]
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=201207895]
 transform = Transform3D(1, 0, 0, 0, 0.7071068, 0.7071068, 0, -0.7071068, 0.7071068, -42.010612, 30, 0.043589592)

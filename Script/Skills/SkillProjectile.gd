@@ -39,6 +39,12 @@ static func create(skill: SkillData, from: Vector3, target_node: Node3D, time: f
 	return p
 
 
+## Fly to a fixed point instead of the target (the shot is stopped by a prop there)
+func set_end_point(point: Vector3) -> void:
+	target = null
+	_aim = point
+
+
 func _ready() -> void:
 	_aim = _target_point()
 	_face(_aim)

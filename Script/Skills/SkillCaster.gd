@@ -178,8 +178,15 @@ func _cast_projectile(slot: int, skill: SkillData, target: Player) -> void:
 	player.begin_cast(skill.cast_time, target.global_position)
 	var height := Vector3(0, skill.projectile_height, 0)
 	var dist := (target.global_position - player.global_position).length()
+	# A prop in the way stops the projectile there: the skill is spent, nothing is hit
+	var block := player.shot_block_point(target, skill.projectile_height)
+	if block != Vector3.INF:
+		var to_block := _flat_distance(block, player.global_position)
+		var block_travel := maxf(to_block / maxf(skill.projectile_speed, 0.1), 0.05)
+		play_skill_fx.rpc(slot, target.peer_id, block, Vector3.ZERO, block_travel, true)
+		return
 	var travel := maxf(dist / maxf(skill.projectile_speed, 0.1), 0.05)
-	play_skill_fx.rpc(slot, target.peer_id, player.global_position + height, Vector3.ZERO, travel)
+	play_skill_fx.rpc(slot, target.peer_id, player.global_position + height, Vector3.ZERO, travel, false)
 	_after(skill.impact_delay + travel, func() -> void:
 		if is_instance_valid(target) and not target.is_dead():
 			_apply_to(target, skill))
@@ -188,7 +195,7 @@ func _cast_projectile(slot: int, skill: SkillData, target: Player) -> void:
 func _cast_area_at_target(slot: int, skill: SkillData, target: Player) -> void:
 	var center := target.global_position
 	player.begin_cast(skill.cast_time, center)
-	play_skill_fx.rpc(slot, target.peer_id, center, Vector3.ZERO, 0.0)
+	play_skill_fx.rpc(slot, target.peer_id, center, Vector3.ZERO, 0.0, false)
 	_after(skill.impact_delay, func() -> void:
 		# The tornado sticks to where the target stood when it was cast.
 		for enemy in _enemies_in_radius(center, skill.radius):
@@ -216,7 +223,7 @@ func _cast_area_in_front(slot: int, skill: SkillData, aim_point: Vector3) -> voi
 		# Stunned or killed while winding up: the skill is cancelled, no VFX, no effect.
 		if player.is_dead() or player.cast_serial != serial:
 			return
-		play_skill_fx.rpc(slot, -1, fx_point, dir, 0.0)
+		play_skill_fx.rpc(slot, -1, fx_point, dir, 0.0, false)
 		for enemy in _enemies_in_radius(hit_center, skill.radius):
 			_apply_to(enemy, skill))
 
@@ -293,7 +300,8 @@ func cast_failed_rpc(slot: int, reason: String) -> void:
 
 ## Visual part of a cast, played on every peer.
 @rpc("authority", "call_local", "reliable")
-func play_skill_fx(slot: int, target_peer: int, point: Vector3, dir: Vector3, travel_time: float) -> void:
+## [param blocked] (projectiles): the shot stops on a prop at [param point]
+func play_skill_fx(slot: int, target_peer: int, point: Vector3, dir: Vector3, travel_time: float, blocked: bool) -> void:
 	if slot < 0 or slot >= skills.size():
 		return
 	var skill := skills[slot]
@@ -310,6 +318,8 @@ func play_skill_fx(slot: int, target_peer: int, point: Vector3, dir: Vector3, tr
 					return
 				var start := player.global_position + Vector3(0, skill.projectile_height, 0)
 				var projectile := SkillProjectile.create(skill, start, target, travel_time)
+				if blocked:
+					projectile.set_end_point(point)
 				world.add_child(projectile)
 				projectile.global_position = start)
 		SkillData.Kind.AREA_AT_TARGET:

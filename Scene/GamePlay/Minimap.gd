@@ -16,6 +16,7 @@ const COLOR_SELF := Color(1, 1, 1)
 const COLOR_TEAMMATE := Color(0.25, 0.9, 0.3)
 const COLOR_ENEMY := Color(0.95, 0.2, 0.2)
 const COLOR_OUTLINE := Color(0, 0, 0, 0.8)
+const COLOR_OBSTACLE := Color(0.6, 0.6, 0.62, 0.85)
 
 var _hero_spawner: Node
 var _redraw_timer := 0.0
@@ -53,6 +54,15 @@ func _draw() -> void:
 	# Middle line between the two team sides
 	draw_line(Vector2(size.x * 0.5, 0), Vector2(size.x * 0.5, size.y), Color(1, 1, 1, 0.15), 1.0)
 	draw_rect(rect, COLOR_BORDER, false, 2.0)
+
+	# Props (walls, barrels...) as grey blocks
+	for obstacle in get_tree().get_nodes_in_group("minimap_obstacle"):
+		var o := obstacle as Node3D
+		if o == null: continue
+		var half: Vector2 = o.get_meta("minimap_size", Vector2(2, 2)) * 0.5
+		var a := _world_to_map(o.global_position - Vector3(half.x, 0, half.y))
+		var b := _world_to_map(o.global_position + Vector3(half.x, 0, half.y))
+		draw_rect(Rect2(a, (b - a).max(Vector2(1, 1))), COLOR_OBSTACLE)
 
 	var spawner := _get_spawner()
 	if spawner == null: return
