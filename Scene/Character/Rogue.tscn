@@ -6,11 +6,13 @@
 
 [node name="character" type="Node3D"]
 script = ExtResource("1_hero")
+attack_hit_time = 0.28
 idle_animation = "Idle_A"
 move_animation = "Running_A"
 attack_animations = PackedStringArray("Ranged_1H_Shoot", "Throw")
 right_hand_item = ExtResource("3_right")
 right_hand_item_rotation = Vector3(0, 90, 0)
+muzzle_offset = Vector3(0, 0.05, 0.9)
 
 [node name="Model" parent="." instance=ExtResource("2_model")]
 transform = Transform3D(-1.35, 0, 0, 0, 1.35, 0, 0, 0, -1.35, 0, 0, 0)

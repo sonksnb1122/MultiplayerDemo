@@ -664,6 +664,16 @@ func _end_cast() -> void:
 	if next == PlayerState.IDLE:
 		_send_animation("idle")
 
+## Where this hero's projectiles appear: the raised weapon (HeroModel.muzzle_point), or in front of
+## the chest at [param height] if the model has no weapon point
+func projectile_origin(height: float) -> Vector3:
+	var model = get_node_or_null("character")
+	if model != null and model.has_method("muzzle_point"):
+		var p: Vector3 = model.muzzle_point()
+		if p != Vector3.INF:
+			return p
+	return global_position + facing_direction() * BasicAttackFx.FORWARD_OFFSET + Vector3(0, height, 0)
+
 ## Visual only: the basic-attack projectile of a ranged hero (damage is applied by the server)
 @rpc("authority", "call_local", "reliable")
 ## [param blocked]: the shot hits a prop at [param block_point] instead of the target
@@ -672,7 +682,7 @@ func play_basic_attack_fx(target_peer: int, travel_time: float, blocked: bool, b
 	var target := hero_spawner.get_player(target_peer) as Node3D
 	var world := get_tree().current_scene
 	if target == null or world == null: return
-	var start := global_position + facing_direction() * BasicAttackFx.FORWARD_OFFSET + Vector3(0, BasicAttackFx.HEIGHT, 0)
+	var start := projectile_origin(BasicAttackFx.HEIGHT)
 	var projectile := BasicAttackFx.create(character_data.id, start, target, travel_time)
 	if projectile == null: return
 	if blocked:

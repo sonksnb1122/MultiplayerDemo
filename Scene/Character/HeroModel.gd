@@ -27,7 +27,8 @@ const ANIMATION_FILES := [
 @export var move_animation := "Running_A"
 ## Tried in order, the first one found is used. "A+B" matches any animation whose name contains
 ## both A and B (case-insensitive). "A>B" plays A then B as one animation (e.g. draw then release
-## a bow), so the attack lands when the whole sequence ends.
+## a bow), so the attack lands when the whole sequence ends. "A~0.6" keeps only the first 0.6 s
+## of A (e.g. the release of the bow without the slow lowering after it).
 @export var attack_animations: PackedStringArray = ["Throw"]
 ## Optional separate animation for skills (Q/W/E casts); empty = skills use the attack animation
 @export var cast_animations: PackedStringArray = []
@@ -38,6 +39,14 @@ const ANIMATION_FILES := [
 @export var left_hand_item_rotation := Vector3.ZERO
 ## Seconds to blend between animations
 @export var blend_time := 0.12
+## Where ranged attacks / skill projectiles leave from: the item in this hand ("right" / "left";
+## empty = the right-hand item, else the left one) ...
+@export var muzzle_hand := ""
+## ... at this point in the item's own space (e.g. the tip of a staff, the front of a crossbow)
+@export var muzzle_offset := Vector3.ZERO
+
+## "right" / "left" -> the weapon node attached to that hand
+var _items := {}
 
 ## name -> Animation, from every animation file found
 static var _source: Dictionary = {}
@@ -66,8 +75,8 @@ func _ready() -> void:
 		push_error("HeroModel: no Skeleton3D in %s" % model.name)
 		return
 	var skeleton := skeletons[0] as Skeleton3D
-	_attach(skeleton, "handslot.r", right_hand_item, right_hand_item_rotation)
-	_attach(skeleton, "handslot.l", left_hand_item, left_hand_item_rotation)
+	_items["right"] = _attach(skeleton, "handslot.r", right_hand_item, right_hand_item_rotation)
+	_items["left"] = _attach(skeleton, "handslot.l", left_hand_item, left_hand_item_rotation)
 
 	var player := AnimationPlayer.new()
 	player.name = "AnimationPlayer"
@@ -97,9 +106,22 @@ func _speed_for(anim: String) -> float:
 	return attack_speed_scale if anim == "attack" or anim == "cast" else 1.0
 
 
-func _attach(skeleton: Skeleton3D, bone: String, item_scene: PackedScene, rotation_deg := Vector3.ZERO) -> void:
+## World position where a projectile of this hero starts: the weapon, as it is posed right now
+## (the attack animation plays on every peer, so it is the raised weapon at the moment of the shot).
+## Vector3.INF when the hero holds no weapon.
+func muzzle_point() -> Vector3:
+	var hand := muzzle_hand
+	if hand.is_empty():
+		hand = "right" if _items.get("right") != null else "left"
+	var item := _items.get(hand) as Node3D
+	if item == null or not item.is_inside_tree():
+		return Vector3.INF
+	return item.to_global(muzzle_offset)
+
+
+func _attach(skeleton: Skeleton3D, bone: String, item_scene: PackedScene, rotation_deg := Vector3.ZERO) -> Node3D:
 	if item_scene == null or skeleton.find_bone(bone) < 0:
-		return
+		return null
 	var slot := BoneAttachment3D.new()
 	slot.name = bone.replace(".", "_")
 	slot.bone_name = bone
@@ -108,6 +130,8 @@ func _attach(skeleton: Skeleton3D, bone: String, item_scene: PackedScene, rotati
 	slot.add_child(item)
 	if item is Node3D:
 		(item as Node3D).rotation_degrees = rotation_deg
+		return item
+	return null
 
 
 func _add_animation(lib: AnimationLibrary, as_name: String, candidates: Array, skeleton_path: String, loop: int) -> void:
@@ -152,12 +176,16 @@ static func _build_sequence(key: String) -> bool:
 		return true
 	var parts := key.split(">")
 	for part in parts:
-		if not _source.has(part):
+		if not _source.has(part.get_slice("~", 0)):
 			return false
 	var seq := Animation.new()
 	var offset := 0.0
 	for part in parts:
-		var src: Animation = _source[part]
+		var src: Animation = _source[part.get_slice("~", 0)]
+		# "Name~0.6": only the first 0.6 s of the clip
+		var length := src.length
+		if "~" in part:
+			length = minf(part.get_slice("~", 1).to_float(), src.length)
 		for t in src.get_track_count():
 			var path := src.track_get_path(t)
 			var type := src.track_get_type(t)
@@ -167,8 +195,11 @@ static func _build_sequence(key: String) -> bool:
 				seq.track_set_path(dst, path)
 				seq.track_set_interpolation_type(dst, src.track_get_interpolation_type(t))
 			for k in src.track_get_key_count(t):
-				seq.track_insert_key(dst, offset + src.track_get_key_time(t, k), src.track_get_key_value(t, k))
-		offset += src.length
+				var key_time := src.track_get_key_time(t, k)
+				if key_time > length + 0.001:
+					break
+				seq.track_insert_key(dst, offset + key_time, src.track_get_key_value(t, k))
+		offset += length
 	seq.length = offset
 	_source[key] = seq
 	return true

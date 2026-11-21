@@ -316,7 +316,7 @@ func play_skill_fx(slot: int, target_peer: int, point: Vector3, dir: Vector3, tr
 			_after_visual(skill.impact_delay, func() -> void:
 				if not is_instance_valid(target) or not is_instance_valid(player):
 					return
-				var start := player.global_position + Vector3(0, skill.projectile_height, 0)
+				var start := player.projectile_origin(skill.projectile_height)
 				var projectile := SkillProjectile.create(skill, start, target, travel_time)
 				if blocked:
 					projectile.set_end_point(point)

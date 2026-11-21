@@ -6,12 +6,14 @@
 
 [node name="character" type="Node3D"]
 script = ExtResource("1_hero")
-attack_speed_scale = 1.6
+attack_speed_scale = 2.0
+attack_hit_time = 1.38
 idle_animation = "Ranged_Bow_Idle"
 move_animation = "Running_HoldingBow"
-attack_animations = PackedStringArray("Ranged_Bow_Draw>Ranged_Bow_Release", "Ranged_Bow_Release", "Throw")
+attack_animations = PackedStringArray("Ranged_Bow_Draw>Ranged_Bow_Release~0.6", "Ranged_Bow_Release", "Throw")
 left_hand_item = ExtResource("4_left")
 left_hand_item_rotation = Vector3(0, 0, 180)
+muzzle_hand = "left"
 
 [node name="Model" parent="." instance=ExtResource("2_model")]
 transform = Transform3D(-1.35, 0, 0, 0, 1.35, 0, 0, 0, -1.35, 0, 0, 0)
