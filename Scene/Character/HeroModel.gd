@@ -32,6 +32,8 @@ const ANIMATION_FILES := [
 @export var attack_animations: PackedStringArray = ["Throw"]
 ## Optional separate animation for skills (Q/W/E casts); empty = skills use the attack animation
 @export var cast_animations: PackedStringArray = []
+## Optional looping animation for an ultimate that lasts (SkillData.caster_animation = "ultimate")
+@export var ultimate_animations: PackedStringArray = []
 @export var right_hand_item: PackedScene
 @export var left_hand_item: PackedScene
 ## Extra rotation (degrees) of the item in each hand, if a model comes out facing the wrong way
@@ -47,6 +49,7 @@ const ANIMATION_FILES := [
 
 ## "right" / "left" -> the weapon node attached to that hand
 var _items := {}
+var _skeleton: Skeleton3D
 
 ## name -> Animation, from every animation file found
 static var _source: Dictionary = {}
@@ -75,6 +78,7 @@ func _ready() -> void:
 		push_error("HeroModel: no Skeleton3D in %s" % model.name)
 		return
 	var skeleton := skeletons[0] as Skeleton3D
+	_skeleton = skeleton
 	_items["right"] = _attach(skeleton, "handslot.r", right_hand_item, right_hand_item_rotation)
 	_items["left"] = _attach(skeleton, "handslot.l", left_hand_item, left_hand_item_rotation)
 
@@ -89,6 +93,8 @@ func _ready() -> void:
 	_add_animation(lib, "attack", attack_animations, skeleton_path, Animation.LOOP_NONE)
 	if not cast_animations.is_empty():
 		_add_animation(lib, "cast", cast_animations, skeleton_path, Animation.LOOP_NONE)
+	if not ultimate_animations.is_empty():
+		_add_animation(lib, "ultimate", ultimate_animations, skeleton_path, Animation.LOOP_LINEAR)
 	player.add_animation_library("", lib)
 	player.animation_finished.connect(_on_animation_player_animation_finished)
 	animation_player = player
@@ -98,6 +104,14 @@ func _ready() -> void:
 ## Same as Character.play_animation, without touching the (shared) animation's loop setting
 func play_animation(anim: String):
 	if animation_player != null and animation_player.has_animation(anim):
+		# The spin rotates bones (root / hips) that the other clips don't key: put the skeleton
+		# back to its rest pose, otherwise the hero keeps looking the wrong way after it
+		# No blend out of it either: blending would turn the body back over 180 degrees
+		if animation_player.current_animation == "ultimate" and anim != "ultimate":
+			if _skeleton != null:
+				_skeleton.reset_bone_poses()
+			animation_player.play(anim, 0.0, _speed_for(anim))
+			return
 		animation_player.play(anim, -1, _speed_for(anim))
 
 

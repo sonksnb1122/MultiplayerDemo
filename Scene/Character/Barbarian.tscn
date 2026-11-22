@@ -11,6 +11,7 @@ idle_animation = "Melee_2H_Idle"
 move_animation = "Running_A"
 attack_animations = PackedStringArray("Melee_2H_Attack_Slice", "Melee_2H_Attack_Chop", "Throw")
 cast_animations = PackedStringArray("Melee_2H_Attack_Chop", "Throw")
+ultimate_animations = PackedStringArray("Melee_2H_Attack_Spinning", "Melee_2H_Attack_Spin")
 right_hand_item = ExtResource("3_right")
 
 [node name="Model" parent="." instance=ExtResource("2_model")]

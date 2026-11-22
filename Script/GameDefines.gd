@@ -30,6 +30,9 @@ const RESPAWN_BASE = 3.0
 const RESPAWN_PER_DEATH = 1.0
 const RESPAWN_MAX = 10.0
 
+## Melee heroes (no projectile) heal this share of their basic attack damage
+const MELEE_LIFESTEAL = 0.15
+
 const ROOM_SUFFIX_STR = "Room#"
 const PLAYER_SUFFIX_STR = "P#"
 

@@ -14,6 +14,7 @@ enum PlayerState{
 	ATTACK,
 	WAITING_FOR_RESPAWN,
 	CASTING,
+	DASHING,
 }
 
 # Skills (server)
@@ -85,6 +86,14 @@ var is_hidden_locally := false
 var _vision_timer := 0.0
 ## server: peer_id -> Time.get_ticks_msec() of the last damage from that enemy (kills / assists)
 var damage_log := {}
+# server: an animation that nothing overrides for a while (e.g. the Barbarian's spin)
+var _anim_lock_left := 0.0
+# server: dash (SkillData.Kind.DASH)
+var _dash_dir := Vector3.ZERO
+var _dash_left := 0.0
+var _dash_speed := 0.0
+var _dash_time_left := 0.0
+var _dash_on_end: Callable
 var _path := PackedVector3Array()
 var _path_index := 0
 var _path_goal := Vector3.INF
@@ -229,6 +238,16 @@ func _physics_process(delta: float) -> void:
 	# only handle physic on server
 	if not multiplayer.is_server(): return
 	
+	if _anim_lock_left > 0.0:
+		_anim_lock_left -= delta
+		if _anim_lock_left <= 0.0 or is_dead():
+			_anim_lock_left = 0.0
+			_last_sent_anim = ""
+			# Back to what the hero is doing (attacking re-sends its own animation every frame)
+			if not is_dead():
+				_send_animation("moving" if player_state == PlayerState.MOVING else "idle")
+			# Face the way again at once (the next direction is always sent)
+			_last_sent_dir = Vector3.ZERO
 	# No gravity while dead: the collision shape is off, the hero would fall through the ground
 	if !is_on_floor() and not is_dead():
 		velocity += get_gravity()*delta
@@ -244,6 +263,11 @@ func _physics_process(delta: float) -> void:
 		return
 		
 	if player_state == PlayerState.WAITING_FOR_RESPAWN: return
+
+	# Dashing: nothing stops it (except a wall)
+	if player_state == PlayerState.DASHING:
+		_process_dash(delta)
+		return
 
 	# Stunned: stand still, keep the current order for when the stun ends
 	if status.is_stunned():
@@ -295,6 +319,7 @@ func perform_attack() -> void:
 		var bonus := status.consume_empowered_attack()
 		var dmg := character_data.damage + bonus
 		attack_cooldown = 0
+		status.break_stealth()  # attacking reveals a stealthed hero
 		if BasicAttackFx.has_projectile(character_data.id):
 			# Ranged: show the projectile everywhere, deal the damage when it lands
 			var target: Player = target_attack
@@ -313,6 +338,8 @@ func perform_attack() -> void:
 					target.take_damage(dmg, peer_id))
 		else:
 			target_attack.take_damage(dmg, peer_id)
+			# Melee heroes heal a little on every hit
+			heal(maxi(int(round(dmg * GameDefines.MELEE_LIFESTEAL)), 1))
 
 ## Server: where a shot from this hero to [param target] (chest height) hits a prop, or Vector3.INF
 func shot_block_point(target: Node3D, height := BasicAttackFx.HEIGHT) -> Vector3:
@@ -323,6 +350,57 @@ func shot_block_point(target: Node3D, height := BasicAttackFx.HEIGHT) -> Vector3
 func has_line_of_fire(target: Node3D) -> bool:
 	if not BasicAttackFx.has_projectile(character_data.id): return true
 	return shot_block_point(target) == Vector3.INF
+
+## Server: rush [param distance] along [param dir] at [param speed]; [param on_end] runs when it stops
+func start_dash(dir: Vector3, distance: float, speed: float, on_end: Callable) -> void:
+	if not multiplayer.is_server(): return
+	_clear_path()
+	_dash_dir = Vector3(dir.x, 0, dir.z).normalized()
+	_dash_left = distance
+	_dash_speed = maxf(speed, 1.0)
+	_dash_time_left = distance / _dash_speed + 0.25  # a wall in the way ends it
+	_dash_on_end = on_end
+	player_state = PlayerState.DASHING
+	_send_direction(global_position + _dash_dir * 5.0, true)
+	_send_animation("moving")
+	if distance <= 0.05:
+		_end_dash()
+
+func _process_dash(delta: float) -> void:
+	var step := minf(_dash_speed * delta, _dash_left)
+	var before := global_position
+	velocity = _dash_dir * (step / maxf(delta, 0.0001))
+	move_and_slide()
+	_dash_left -= Vector2(global_position.x - before.x, global_position.z - before.z).length()
+	_dash_time_left -= delta
+	if _dash_left <= 0.05 or _dash_time_left <= 0.0:
+		_end_dash()
+
+func _end_dash() -> void:
+	velocity = Vector3.ZERO
+	player_state = PlayerState.IDLE
+	_send_animation("idle")
+	var cb := _dash_on_end
+	_dash_on_end = Callable()
+	if cb.is_valid():
+		cb.call()
+
+## Server: play [param animation_name] on every peer and keep it for [param duration] seconds
+## (moving / attacking don't replace it meanwhile)
+func play_locked_animation(animation_name: String, duration: float) -> void:
+	if not multiplayer.is_server(): return
+	if $character is Character and not $character.animation_player.has_animation(animation_name): return
+	_anim_lock_left = 0.0
+	_last_sent_anim = animation_name
+	trigger_animation.rpc(peer_id, animation_name)
+	_anim_lock_left = duration
+
+## Server: after a charge, keep attacking [param target]
+func attack_after_dash(target: Player) -> void:
+	if is_dead() or target == null or target.is_dead(): return
+	target_attack = target
+	target_position = target.position
+	player_state = PlayerState.ATTACK
 
 func get_move_speed() -> float:
 	return character_data.movement_speed * status.move_speed_multiplier()
@@ -385,6 +463,7 @@ func _next_waypoint(goal: Vector3) -> Vector3:
 # channel, so it never waits behind reliable packets (ENet delivers each channel in order).
 
 func _send_animation(animation_name: String) -> void:
+	if _anim_lock_left > 0.0: return
 	if _last_sent_anim == animation_name: return
 	_last_sent_anim = animation_name
 	trigger_animation.rpc(peer_id, animation_name)
@@ -599,6 +678,8 @@ func position_clicked(mouse_position: Vector3):
 	# On the ground: a click on top of a prop must not aim at its roof
 	target_position = Vector3(mouse_position.x, 0.0, mouse_position.z)
 	_clear_path()
+	# A new order always turns the hero, even if it looks like the last direction sent
+	_last_sent_dir = Vector3.ZERO
 	_set_order(PlayerState.MOVING)
 	
 @rpc("any_peer", "call_local", "unreliable_ordered")
@@ -626,6 +707,8 @@ func hero_clicked(peer_id_object_clicked: int):
 
 # A new move/attack order given while a skill is being cast runs once the cast ends
 func _set_order(new_state) -> void:
+	if player_state == PlayerState.DASHING:
+		return  # a dash is short: orders given during it are ignored
 	if player_state == PlayerState.CASTING:
 		state_before_cast = new_state
 	else:
@@ -640,7 +723,7 @@ func is_enemy(other) -> bool:
 	return other is Player and other != self and other.team_side != team_side
 
 func can_cast() -> bool:
-	return not is_dead() and player_state != PlayerState.CASTING and not status.is_stunned()
+	return not is_dead() and player_state != PlayerState.CASTING and player_state != PlayerState.DASHING and not status.is_stunned()
 
 ## Direction the hero model faces (the model looks along -Z after look_at)
 func facing_direction() -> Vector3:

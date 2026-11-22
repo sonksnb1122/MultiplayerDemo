@@ -46,6 +46,7 @@ var _shield_amount := 0
 var _shield_left := 0.0
 var _empower_charges := 0
 var _empower_bonus := 0
+var _stealth_left := 0.0
 var _dots: Array = []  # of {damage, interval, tick, left}
 var _dirty := false
 
@@ -145,6 +146,23 @@ func grant_cc_immunity(duration: float) -> void:
 	_dirty = true
 
 
+## Invisible to enemies (see Vision) until it runs out or the hero attacks / casts
+func apply_stealth(duration: float) -> void:
+	_stealth_left = maxf(_stealth_left, duration)
+	_dirty = true
+
+
+func break_stealth() -> void:
+	if _stealth_left > 0.0:
+		_stealth_left = 0.0
+		_dirty = true
+
+
+## Every peer (synced state)
+func is_stealthed() -> bool:
+	return bool(state.get("stealth", false))
+
+
 func apply_haste(factor: float, duration: float) -> void:
 	_haste_factor = factor
 	_haste_left = maxf(_haste_left, duration)
@@ -163,6 +181,7 @@ func clear_all() -> void:
 	_empower_charges = 0
 	_empower_bonus = 0
 	_dots.clear()
+	_stealth_left = 0.0
 	_dirty = true
 	_sync()
 
@@ -176,6 +195,7 @@ func _process(delta: float) -> void:
 		_slow_factor = 1.0
 	_haste_left = _tick(_haste_left, delta)
 	_cc_immune_left = _tick(_cc_immune_left, delta)
+	_stealth_left = _tick(_stealth_left, delta)
 	_shield_left = _tick(_shield_left, delta)
 	if _shield_left <= 0.0:
 		_shield_amount = 0
@@ -220,6 +240,7 @@ func _build_state() -> Dictionary:
 		"empower": _empower_charges,
 		"cc_immune": _cc_immune_left > 0.0,
 		"haste": _haste_left > 0.0,
+		"stealth": _stealth_left > 0.0,
 	}
 
 

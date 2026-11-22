@@ -8,6 +8,12 @@ enum Kind {
 	AREA_AT_TARGET,  ## Appears on an enemy in range, hits every enemy within [member radius].
 	AREA_IN_FRONT,   ## Lands on the ground in front of the hero (towards the mouse).
 	SELF_BUFF,       ## Buffs the caster.
+	AREA_AT_POINT,   ## Lands on the ground under the mouse (within cast_range), hits every enemy in radius.
+	AREA_AROUND_CASTER, ## Hits every enemy within radius around the caster (follows them while it lasts).
+	DASH,            ## The caster rushes up to cast_range toward the mouse (or the target if needs_target);
+	                 ## with a radius > 0 it hits every enemy around the end point.
+	LINE_SHOT,       ## A shot flying straight toward the mouse for cast_range, through everything
+	                 ## (props, heroes): hits every enemy within radius of its path, once.
 }
 
 enum Buff {
@@ -16,6 +22,7 @@ enum Buff {
 	EMPOWER_ATTACKS,  ## Next [member buff_count] basic attacks deal +[member buff_value] damage.
 	CC_IMMUNE,        ## Immune to stun and slow.
 	HASTE,            ## Movement speed x[member buff_value].
+	STEALTH,          ## Invisible to enemies for buff_duration (unless very close); next basic attack +buff_value.
 }
 
 var id: String = ""
@@ -50,6 +57,14 @@ var forward_distance: float = 0.0
 ## AREA_IN_FRONT: true = the hit area is centred on the hero, the VFX still lands in front.
 var area_on_caster: bool = false
 
+## Area kinds: how many times the area hits, and the seconds between two hits
+var hits: int = 1
+var hit_interval: float = 0.5
+
+# --- Dash ---
+## Units per second while dashing
+var dash_speed: float = 40.0
+
 # --- Crowd control / damage over time ---
 var stun_duration: float = 0.0
 ## 0.4 = 40 % slower.
@@ -81,6 +96,19 @@ var projectile_vfx_rotation: Vector3 = Vector3.ZERO
 var projectile_speed: float = 25.0
 ## Height above the ground the projectile flies at.
 var projectile_height: float = 1.6
+## AREA_AT_POINT: models falling from the sky on the area (e.g. arrows), instead of / with vfx_scene
+var rain_model: String = ""
+var rain_count: int = 12
+## VFX attached to every falling model (e.g. lightning on the arrows), and its size
+var rain_vfx: String = ""
+var rain_vfx_scale: float = 0.5
+## Animation the caster plays (and keeps) while the skill lasts, e.g. "ultimate" (HeroModel)
+var caster_animation: String = ""
+## AREA_AROUND_CASTER: VFX stuck to the caster while the skill lasts (shows the area),
+## scaled [member aura_scale_xz] wide and [member aura_scale_y] high
+var aura_vfx: String = ""
+var aura_scale_xz: float = 1.0
+var aura_scale_y: float = 1.0
 
 
 func total_damage(base_damage: int) -> int:
@@ -89,6 +117,15 @@ func total_damage(base_damage: int) -> int:
 
 func is_targeted() -> bool:
 	return kind == Kind.PROJECTILE or kind == Kind.AREA_AT_TARGET or needs_target
+
+
+## Area of effect to draw for the aiming indicator (0 = none)
+func indicator_radius() -> float:
+	if kind == Kind.PROJECTILE:
+		return 1.2
+	if kind == Kind.LINE_SHOT:
+		return 0.0
+	return radius
 
 
 static func make(values: Dictionary) -> SkillData:
