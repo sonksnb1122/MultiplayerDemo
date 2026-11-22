@@ -29,6 +29,8 @@ var id: String = ""
 var display_name: String = ""
 var description: String = ""
 var color: Color = Color.WHITE
+## Icon of the skill bar slot (res:// path); empty = the name is written in the slot
+var icon: String = ""
 var kind: Kind = Kind.PROJECTILE
 
 var cooldown: float = 5.0

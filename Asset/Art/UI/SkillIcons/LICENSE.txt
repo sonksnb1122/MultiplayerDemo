@@ -1,0 +1,4 @@
+RPG skill icons by Viktor Hahn (v-ktor)
+https://v-ktor.itch.io/rpg-skill-icons
+License: CC0
+Only the icons used by the game are included (128x128).

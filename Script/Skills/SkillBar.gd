@@ -6,8 +6,11 @@ extends Control
 
 const SPACING := 8
 const MARGIN := 16
+## Room under each round slot for its key (Q, W, E, R, SPC)
+const KEY_HEIGHT := 14
 
-var SLOT_SIZE := Vector2(86, 86)
+## Round slots, a third of the old 86 px squares
+var SLOT_SIZE := Vector2(29, 29)
 
 var caster: SkillCaster
 var _overlays: Array[ColorRect] = []
@@ -42,7 +45,7 @@ func setup(skill_caster: SkillCaster) -> void:
 		anchor_bottom = 1.0
 		offset_left = -width - MARGIN
 		offset_right = -MARGIN
-		offset_top = -SLOT_SIZE.y - MARGIN
+		offset_top = -SLOT_SIZE.y - KEY_HEIGHT - MARGIN
 		offset_bottom = -MARGIN
 
 	for i in count:
@@ -65,40 +68,41 @@ func setup(skill_caster: SkillCaster) -> void:
 
 
 func _build_slot(i: int, skill: SkillData) -> void:
+	var radius := int(SLOT_SIZE.x / 2.0) + 1
+	# Round slot: the background circle clips everything inside it (icon, cooldown shade)
 	var slot := Panel.new()
 	slot.mouse_filter = Control.MOUSE_FILTER_PASS
 	slot.tooltip_text = "%s [%s]\n%s\nHồi chiêu: %ds" % [skill.display_name, SkillCaster.KEY_LABELS[i], skill.description, int(skill.cooldown)]
 	slot.position = Vector2(i * (SLOT_SIZE.x + SPACING), 0)
 	slot.size = SLOT_SIZE
+	slot.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
 	var style := StyleBoxFlat.new()
 	style.bg_color = skill.color.darkened(0.35)
-	style.border_color = skill.color.lightened(0.3)
-	style.set_border_width_all(3)
-	style.set_corner_radius_all(10)
+	style.set_corner_radius_all(radius)
+	style.anti_aliasing = true
 	slot.add_theme_stylebox_override("panel", style)
 	add_child(slot)
 
-	var name_label := Label.new()
-	name_label.text = skill.display_name
-	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	name_label.add_theme_font_size_override("font_size", 13)
-	name_label.add_theme_constant_override("outline_size", 4)
-	name_label.add_theme_color_override("font_outline_color", Color.BLACK)
-	name_label.position = Vector2(4, 22)
-	name_label.size = Vector2(SLOT_SIZE.x - 8, SLOT_SIZE.y - 26)
-	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	slot.add_child(name_label)
-
-	var key_label := Label.new()
-	key_label.text = SkillCaster.KEY_LABELS[i]
-	key_label.position = Vector2(7, 2)
-	key_label.add_theme_font_size_override("font_size", 18)
-	key_label.add_theme_constant_override("outline_size", 5)
-	key_label.add_theme_color_override("font_outline_color", Color.BLACK)
-	key_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	slot.add_child(key_label)
+	var icon_tex: Texture2D = load(skill.icon) if not skill.icon.is_empty() and ResourceLoader.exists(skill.icon) else null
+	if icon_tex != null:
+		var icon := TextureRect.new()
+		icon.texture = icon_tex
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		icon.position = Vector2.ZERO
+		icon.size = SLOT_SIZE
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		slot.add_child(icon)
+	else:
+		# No icon: the first letter of the skill
+		var letter := Label.new()
+		letter.text = skill.display_name.left(1)
+		letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		letter.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		letter.size = SLOT_SIZE
+		letter.add_theme_font_size_override("font_size", 14)
+		letter.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		slot.add_child(letter)
 
 	var overlay := ColorRect.new()
 	overlay.color = Color(0, 0, 0, 0.65)
@@ -113,13 +117,39 @@ func _build_slot(i: int, skill: SkillData) -> void:
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	timer_label.size = SLOT_SIZE
-	timer_label.add_theme_font_size_override("font_size", 28)
-	timer_label.add_theme_constant_override("outline_size", 6)
+	timer_label.add_theme_font_size_override("font_size", 12)
+	timer_label.add_theme_constant_override("outline_size", 4)
 	timer_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	timer_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	timer_label.visible = false
 	slot.add_child(timer_label)
 	_timers.append(timer_label)
+
+	# Ring in the skill's color, drawn over the icon (outside the clipping slot)
+	var ring := Panel.new()
+	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ring.position = slot.position
+	ring.size = SLOT_SIZE
+	var ring_style := StyleBoxFlat.new()
+	ring_style.draw_center = false
+	ring_style.border_color = skill.color.lightened(0.3)
+	ring_style.set_border_width_all(2)
+	ring_style.set_corner_radius_all(radius)
+	ring_style.anti_aliasing = true
+	ring.add_theme_stylebox_override("panel", ring_style)
+	add_child(ring)
+
+	# Key under the circle
+	var key_label := Label.new()
+	key_label.text = SkillCaster.KEY_LABELS[i]
+	key_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	key_label.position = Vector2(slot.position.x - 6, SLOT_SIZE.y)
+	key_label.size = Vector2(SLOT_SIZE.x + 12, KEY_HEIGHT)
+	key_label.add_theme_font_size_override("font_size", 10)
+	key_label.add_theme_constant_override("outline_size", 3)
+	key_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	key_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(key_label)
 
 
 func _process(_delta: float) -> void:
@@ -136,7 +166,7 @@ func _process(_delta: float) -> void:
 			var ratio := clampf(left / total, 0.0, 1.0)
 			_overlays[i].size = Vector2(SLOT_SIZE.x, SLOT_SIZE.y * ratio)
 			_overlays[i].position = Vector2(0, SLOT_SIZE.y * (1.0 - ratio))
-			_timers[i].text = ("%.1f" % left) if left < 3.0 else str(ceili(left))
+			_timers[i].text = ("%.1f" % left) if left < 1.0 else str(ceili(left))
 
 
 func _on_cooldown_started(_slot: int, _duration: float) -> void:
