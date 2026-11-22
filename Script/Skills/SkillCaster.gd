@@ -274,6 +274,7 @@ func request_cast(slot: int, target_peer: int, aim_point: Vector3) -> void:
 
 	_cooldown_left[slot] = skill.cooldown
 	cooldown_started_rpc.rpc_id(player.peer_id, slot, skill.cooldown)
+	play_cast_sound.rpc(slot)
 
 
 func _cast_projectile(slot: int, skill: SkillData, target: Player) -> void:
@@ -451,7 +452,7 @@ func _apply_to(target: Player, skill: SkillData) -> void:
 		target.status.apply_dot(skill.dot_damage, skill.dot_interval, skill.dot_duration, player.peer_id)
 	var damage := skill.total_damage(player.character_data.damage)
 	if damage > 0:
-		target.take_damage(damage, player.peer_id)
+		target.take_damage(damage, player.peer_id, Player.DamageKind.SKILL)
 
 
 func _fail(slot: int, reason: String) -> void:
@@ -494,6 +495,17 @@ func cooldown_started_rpc(slot: int, duration: float) -> void:
 
 
 @rpc("authority", "call_local", "reliable")
+func play_cast_sound(slot: int) -> void:
+	if slot < 0 or slot >= skills.size() or player.is_hidden_locally:
+		return
+	var skill := skills[slot]
+	var sound := skill.sound
+	if sound.is_empty():
+		sound = "dash" if skill.kind == SkillData.Kind.DASH else "cast"
+	Sfx.play_3d(get_tree(), sound, player.global_position + Vector3(0, 1.5, 0), -2.0)
+
+
+@rpc("authority", "call_local", "reliable")
 func cast_failed_rpc(slot: int, reason: String) -> void:
 	cast_failed.emit(slot, reason)
 
@@ -528,6 +540,7 @@ func play_skill_fx(slot: int, target_peer: int, point: Vector3, dir: Vector3, tr
 		SkillData.Kind.AREA_IN_FRONT:
 			# The server sends this at the moment of impact, so play it right away.
 			SkillVfx.spawn_world(world, skill.vfx_scene, point + Vector3(0, 0.05, 0), skill.vfx_scale, 0.0, false, dir)
+			_play_hit_sound(skill, point)
 		SkillData.Kind.SELF_BUFF:
 			pass  # buff visuals come from StatusEffects.sync_state
 		SkillData.Kind.AREA_AT_POINT:
@@ -536,6 +549,11 @@ func play_skill_fx(slot: int, target_peer: int, point: Vector3, dir: Vector3, tr
 					SkillVfx.spawn_world(world, skill.vfx_scene, point, skill.vfx_scale, skill.vfx_lifetime, true)
 				if not skill.rain_model.is_empty():
 					_spawn_rain(world, skill, point))
+			# One sound per wave
+			if not skill.hit_sound.is_empty():
+				for i in maxi(skill.hits, 1):
+					_after_visual(skill.impact_delay + i * skill.hit_interval, func() -> void:
+						_play_hit_sound(skill, point))
 		SkillData.Kind.LINE_SHOT:
 			_after_visual(skill.impact_delay, func() -> void:
 				if not is_instance_valid(player):
@@ -550,6 +568,13 @@ func play_skill_fx(slot: int, target_peer: int, point: Vector3, dir: Vector3, tr
 			# Sent by the server at the moment of each hit
 			if not skill.vfx_scene.is_empty():
 				SkillVfx.spawn_world(world, skill.vfx_scene, point + Vector3(0, 0.05, 0), skill.vfx_scale, 0.0, false, dir)
+			_play_hit_sound(skill, point)
+
+
+func _play_hit_sound(skill: SkillData, point: Vector3) -> void:
+	if skill.hit_sound.is_empty() or player.is_hidden_locally:
+		return
+	Sfx.play_3d(get_tree(), skill.hit_sound, point + Vector3(0, 1.0, 0), -2.0)
 
 
 ## VFX stuck to the hero while an AREA_AROUND_CASTER skill lasts (Barbarian's fire whirlwind):

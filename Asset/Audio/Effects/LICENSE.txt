@@ -1,0 +1,9 @@
+Sound effects from "400 Sounds Pack" by Chequered Ink
+https://ci.itch.io/400-sounds-pack
+
+License (from the pack page): you may use these game assets for ANY and ALL uses including
+commercial use, with or without giving credit, except that you may not sell or redistribute
+the unaltered assets as your own game assets.
+
+Only the files used by the game are included here (original file names kept).
+ambient_wind_short.wav: the first 2.6 s of ambient_wind.wav with a fade in / out.

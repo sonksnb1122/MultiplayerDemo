@@ -218,7 +218,7 @@ func _process(delta: float) -> void:
 
 	_sync()
 	if dot_total > 0 and player != null:
-		player.take_damage(dot_total, dot_source)
+		player.take_damage(dot_total, dot_source, Player.DamageKind.DOT)
 
 
 func _tick(value: float, delta: float) -> float:

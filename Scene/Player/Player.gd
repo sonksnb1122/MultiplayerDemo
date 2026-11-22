@@ -86,6 +86,15 @@ var is_hidden_locally := false
 var _vision_timer := 0.0
 ## server: peer_id -> Time.get_ticks_msec() of the last damage from that enemy (kills / assists)
 var damage_log := {}
+## What a hp change was, for the floating number / hit feedback
+enum DamageKind { BASIC, SKILL, DOT, HEAL }
+
+var _flash_material: StandardMaterial3D
+var _step_timer := 0.0
+## Sound of a melee basic attack landing, by hero id (ranged heroes use their shot sound)
+const MELEE_ATTACK_SOUNDS := {SkillDB.KNIGHT: "sword", SkillDB.BARBARIAN: "axe"}
+var _flash_tween: Tween
+
 # server: an animation that nothing overrides for a while (e.g. the Barbarian's spin)
 var _anim_lock_left := 0.0
 # server: dash (SkillData.Kind.DASH)
@@ -337,6 +346,7 @@ func perform_attack() -> void:
 				if is_instance_valid(target) and not target.is_dead() and not is_dead():
 					target.take_damage(dmg, peer_id))
 		else:
+			play_melee_sound.rpc()
 			target_attack.take_damage(dmg, peer_id)
 			# Melee heroes heal a little on every hit
 			heal(maxi(int(round(dmg * GameDefines.MELEE_LIFESTEAL)), 1))
@@ -497,6 +507,7 @@ func _sync_transform_to_clients(delta: float) -> void:
 # --- CLIENT SMOOTHING ---
 
 func _process(delta: float) -> void:
+	_play_footsteps(delta)
 	_vision_timer -= delta
 	if _vision_timer <= 0.0:
 		_vision_timer = 0.1
@@ -506,7 +517,7 @@ func _process(delta: float) -> void:
 	global_position = global_position.lerp(_net_target_pos, weight)
 
 ## Server. [param attacker_peer]: hero who dealt it (0 = unknown), for kills / assists / stats
-func take_damage(dmg: int, attacker_peer := 0) -> void:
+func take_damage(dmg: int, attacker_peer := 0, kind := DamageKind.BASIC) -> void:
 	if not multiplayer.is_server(): return
 	if is_dead(): return
 	# Shield (Bubble Shock) absorbs first
@@ -525,7 +536,7 @@ func take_damage(dmg: int, attacker_peer := 0) -> void:
 	# Before set_current_hp: it starts the respawn timer, whose length depends on the deaths count
 	if current_hp <= 0 and match_manager != null:
 		match_manager.on_hero_killed(self, attacker_peer)
-	set_current_hp.rpc(peer_id, dmg, current_hp)	
+	set_current_hp.rpc(peer_id, dmg, current_hp, kind)	
 
 func _match_manager() -> MatchManager:
 	var scene := get_tree().current_scene
@@ -577,12 +588,13 @@ func set_object_direction(object_target_peer_id: int, lookAtVector: Vector3):
 	$character.look_at(lookAtVector, Vector3.UP)
 
 @rpc("authority", "call_local", "reliable") 
-func set_current_hp(object_target_peer_id: int, damage_take: int, current_hp_after_take_dmg: int):
+func set_current_hp(object_target_peer_id: int, damage_take: int, current_hp_after_take_dmg: int, kind: int = DamageKind.BASIC):
 	if peer_id != object_target_peer_id: return
 	
-	# TODO: trigger animation take dmg, UI for decrease HP
-	if damage_take != 0:
-		show_take_damage_label(damage_take)
+	if damage_take != 0 and not is_hidden_locally:
+		show_take_damage_label(damage_take, kind)
+		if kind != DamageKind.HEAL:
+			_hit_feedback(damage_take, kind)
 	if player_HUD != null:
 		player_HUD.set_current_hp_details(current_hp_after_take_dmg)
 	current_hp = current_hp_after_take_dmg
@@ -622,8 +634,9 @@ func _update_vision() -> void:
 ## Server: heal [param amount] hp (healing zone)
 func heal(amount: int) -> void:
 	if not multiplayer.is_server() or is_dead() or current_hp >= character_data.hp: return
+	var before := current_hp
 	current_hp = mini(current_hp + amount, character_data.hp)
-	set_current_hp.rpc(peer_id, 0, current_hp)
+	set_current_hp.rpc(peer_id, current_hp - before, current_hp, DamageKind.HEAL)
 
 @rpc("authority", "call_local", "reliable")
 func trigger_animation(object_target_peer_id: int, animation_name: String):
@@ -664,7 +677,7 @@ func on_ready(object_peer_id: int):
 	
 	# Send the current position, hp, direction and animation to the sender
 	set_object_position.rpc_id(peer_id_sender, peer_id, global_position)
-	set_current_hp.rpc_id(peer_id_sender, peer_id, 0, current_hp)
+	set_current_hp.rpc_id(peer_id_sender, peer_id, 0, current_hp, DamageKind.BASIC)
 	if _last_sent_dir != Vector3.ZERO:
 		set_object_direction.rpc_id(peer_id_sender, peer_id, global_position + _last_sent_dir)
 	if _last_sent_anim != "":
@@ -806,10 +819,13 @@ func play_basic_attack_fx(target_peer: int, travel_time: float, blocked: bool, b
 	world.add_child(projectile)
 	projectile.global_position = start
 	var hero_id := character_data.id
+	if not is_hidden_locally:
+		Sfx.play_3d(get_tree(), "shoot_magic" if hero_id == SkillDB.MAGE else "shoot", start, -3.0)
 	get_tree().create_timer(travel_time).timeout.connect(func() -> void:
 		if not is_instance_valid(world): return
 		if blocked:
 			BasicAttackFx.spawn_impact(world, block_point, hero_id)
+			Sfx.play_3d(get_tree(), "impact", block_point, -4.0)
 		elif is_instance_valid(target):
 			BasicAttackFx.spawn_impact(world, target.global_position + Vector3(0, BasicAttackFx.HEIGHT, 0), hero_id))
 
@@ -827,9 +843,50 @@ func _is_sender_owner(rpc_name: String) -> bool:
 		return false
 	return true
 
-func show_take_damage_label(dmg: int):
+func show_take_damage_label(dmg: int, kind := DamageKind.BASIC):
 	var label = dmg_label.instantiate()
-	label.set_dmg(dmg)
 	add_child(label)
 	label.position = dmg_label_pos.position
-	pass
+	label.set_dmg(dmg, kind)
+
+@rpc("authority", "call_local", "reliable")
+func play_melee_sound() -> void:
+	if is_hidden_locally: return
+	Sfx.play_3d(get_tree(), MELEE_ATTACK_SOUNDS.get(character_data.id, "hit"), global_position + facing_direction() * 1.5 + Vector3(0, 1.5, 0))
+
+## Every peer: footsteps while the run animation plays (faster heroes step faster)
+func _play_footsteps(delta: float) -> void:
+	if current_animation != "moving" or current_hp <= 0 or is_hidden_locally or not visible:
+		_step_timer = 0.0
+		return
+	_step_timer -= delta
+	if _step_timer > 0.0: return
+	_step_timer = clampf(3.2 / maxf(float(character_data.movement_speed), 1.0), 0.2, 0.45)
+	Sfx.play_step(get_tree(), global_position)
+
+## Every peer: white flash on the model, hit sound, and a camera shake if it is my hero
+func _hit_feedback(dmg: int, kind: int) -> void:
+	_flash_white()
+	Sfx.play_3d(get_tree(), "hit" if kind != DamageKind.DOT else "impact", global_position + Vector3(0, 1.5, 0), -6.0 if kind == DamageKind.DOT else -3.0)
+	if NetworkManager.is_mine(peer_id):
+		var cam := get_viewport().get_camera_3d()
+		if cam != null and cam.has_method("shake"):
+			cam.call("shake", clampf(0.15 + float(dmg) / character_data.hp * 2.0, 0.15, 0.9), 0.25)
+
+func _flash_white() -> void:
+	if _flash_material == null:
+		_flash_material = StandardMaterial3D.new()
+		_flash_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_flash_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	var meshes := $character.find_children("*", "MeshInstance3D", true, false)
+	for m in meshes:
+		(m as MeshInstance3D).material_overlay = _flash_material
+	_flash_material.albedo_color = Color(1, 1, 1, 0.75)
+	if _flash_tween != null and _flash_tween.is_valid():
+		_flash_tween.kill()
+	_flash_tween = create_tween()
+	_flash_tween.tween_property(_flash_material, "albedo_color:a", 0.0, 0.15)
+	_flash_tween.tween_callback(func() -> void:
+		for m in meshes:
+			if is_instance_valid(m):
+				(m as MeshInstance3D).material_overlay = null)

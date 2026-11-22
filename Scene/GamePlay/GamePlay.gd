@@ -7,6 +7,7 @@ class_name GamePlay
 var game_started = false
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	Music.stop(get_tree())  # no music during the fight
 	NetworkManager.server_disconnected.connect(_on_server_disconnected)
 	game_play_network.start_game.connect(_on_game_started)
 	game_play_network.play_time_trigged.connect(_on_play_time_trigged)

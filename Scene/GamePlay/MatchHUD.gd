@@ -181,6 +181,7 @@ func _button(text: String, normal: String, pressed: String) -> Button:
 	b.add_theme_stylebox_override("hover", load(normal))
 	b.add_theme_stylebox_override("pressed", load(pressed))
 	b.add_theme_stylebox_override("disabled", load(pressed))
+	b.pressed.connect(func() -> void: Sfx.play_ui(get_tree(), "click"))
 	return b
 
 
@@ -265,6 +266,15 @@ func _on_hero_killed(victim_peer: int, killer_peer: int, _assists: Array, respaw
 	tween.tween_property(row, "modulate:a", 0.0, 0.6)
 	tween.tween_callback(row.queue_free)
 
+	var me := multiplayer.get_unique_id()
+	if killer_peer == me:
+		Sfx.play_ui(get_tree(), "kill")
+		_hit_stop()
+		_shake(0.5, 0.3)
+	elif victim_peer == me:
+		Sfx.play_ui(get_tree(), "death")
+		_shake(0.8, 0.4)
+
 	# My hero died: respawn countdown
 	if victim_peer == multiplayer.get_unique_id():
 		_respawn_left = respawn_time
@@ -294,6 +304,23 @@ func _refresh_board(grid: GridContainer) -> void:
 			grid.add_child(_label("", 18))
 
 
+## Freeze the game for a split second on my kills (felt more than seen)
+func _hit_stop() -> void:
+	Engine.time_scale = 0.1
+	get_tree().create_timer(0.07, true, false, true).timeout.connect(func() -> void:
+		Engine.time_scale = 1.0)
+
+
+func _exit_tree() -> void:
+	Engine.time_scale = 1.0
+
+
+func _shake(strength: float, duration: float) -> void:
+	var cam := get_viewport().get_camera_3d()
+	if cam != null and cam.has_method("shake"):
+		cam.call("shake", strength, duration)
+
+
 func _on_match_ended(winner: int) -> void:
 	_respawn_label.visible = false
 	_board.visible = false
@@ -307,6 +334,7 @@ func _on_match_ended(winner: int) -> void:
 		_end_title.text = "DEFEAT"
 		_end_title.add_theme_color_override("font_color", COLOR_ENEMY)
 	_refresh_board(_end_grid)
+	Sfx.play_ui(get_tree(), "defeat" if winner >= 0 and winner != match_manager.my_team() else "victory")
 	var is_host := multiplayer.is_server()
 	_restart_button.visible = is_host
 	_waiting_label.visible = not is_host

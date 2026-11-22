@@ -5,6 +5,33 @@ extends Camera3D
 
 var drag_active = false
 
+# Shake (h/v offsets, so it doesn't fight with the camera position)
+var _shake_strength := 0.0
+var _shake_time := 0.0
+var _shake_left := 0.0
+
+
+## [param strength] in world units, fades out over [param duration] seconds
+func shake(strength: float, duration: float) -> void:
+	if _shake_left > 0.0 and _shake_strength * (_shake_left / maxf(_shake_time, 0.001)) > strength:
+		return  # a stronger shake is already running
+	_shake_strength = strength
+	_shake_time = duration
+	_shake_left = duration
+
+
+func _process(delta: float) -> void:
+	if _shake_left <= 0.0:
+		return
+	_shake_left -= delta
+	if _shake_left <= 0.0:
+		h_offset = 0.0
+		v_offset = 0.0
+		return
+	var k := _shake_strength * (_shake_left / _shake_time)
+	h_offset = randf_range(-k, k)
+	v_offset = randf_range(-k, k)
+
 func _input(event: InputEvent) -> void:
 	if PauseMenu.is_open:
 		drag_active = false

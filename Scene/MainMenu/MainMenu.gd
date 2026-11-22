@@ -6,6 +6,7 @@ extends Control
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	Music.play_menu(get_tree())
 	if NetworkManager.disconnected_reason in [GameDefines.DisconnectReason.HOST_CLOSED_ROOM, GameDefines.DisconnectReason.BACK_TO_LOBBY]:
 		go_to_lobby()
 

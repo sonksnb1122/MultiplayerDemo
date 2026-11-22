@@ -102,6 +102,10 @@ var rain_count: int = 12
 ## VFX attached to every falling model (e.g. lightning on the arrows), and its size
 var rain_vfx: String = ""
 var rain_vfx_scale: float = 0.5
+## Sfx names: [member sound] when cast (empty = "cast", or "dash" for dashes), [member hit_sound]
+## when it lands (every hit of an area / the end of a dash / the impact in front)
+var sound: String = ""
+var hit_sound: String = ""
 ## Animation the caster plays (and keeps) while the skill lasts, e.g. "ultimate" (HeroModel)
 var caster_animation: String = ""
 ## AREA_AROUND_CASTER: VFX stuck to the caster while the skill lasts (shows the area),
