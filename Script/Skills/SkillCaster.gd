@@ -148,10 +148,16 @@ func _update_indicator() -> void:
 	var hit := _aim_hit()
 	var point: Vector3 = hit.get("position", hero)
 	var center := hero
+	if skill.is_targeted():
+		var target := _pick_target(hit, point, skill)
+		if target == null:
+			# Nobody in range: only the range ring, no aim marker
+			_indicator.show_at(skill.color, hero, skill.cast_range, hero, 0.0)
+			return
+		point = target.global_position
 	match skill.kind:
 		SkillData.Kind.PROJECTILE, SkillData.Kind.AREA_AT_TARGET:
-			var target := _pick_target(hit, point, skill)
-			center = target.global_position if target != null else _clamp_to_range(point, skill.cast_range)
+			center = point
 		SkillData.Kind.AREA_AT_POINT:
 			center = _clamp_to_range(point, skill.cast_range)
 		SkillData.Kind.AREA_IN_FRONT:
@@ -161,8 +167,7 @@ func _update_indicator() -> void:
 			center = hero if skill.area_on_caster else hero + dir * skill.forward_distance
 		SkillData.Kind.DASH:
 			if skill.needs_target:
-				var target := _pick_target(hit, point, skill)
-				center = target.global_position if target != null else _clamp_to_range(point, skill.cast_range)
+				center = point
 			else:
 				center = _clamp_to_range(point, skill.cast_range)
 	if skill.kind == SkillData.Kind.LINE_SHOT:
@@ -203,9 +208,10 @@ func try_cast(slot: int, hit: Dictionary = {}) -> void:
 	if skill.is_targeted():
 		var target := _pick_target(hit, point, skill)
 		if target == null:
-			cast_failed.emit(slot, "No target")
+			cast_failed.emit(slot, "No target in range")
 			return
 		target_peer = target.peer_id
+		point = target.global_position  # aimed at the target, not at the cursor
 	request_cast.rpc_id(GameDefines.HOST_ID, slot, target_peer, point)
 
 
@@ -297,25 +303,32 @@ func local_cooldown_left(slot: int) -> float:
 
 
 func _pick_target(hit: Dictionary, point: Vector3, skill: SkillData) -> Player:
-	var collider = hit.get("collider")
-	if collider is Player and player.is_enemy(collider) and not collider.is_dead() and not collider.is_hidden_locally:
-		return collider
-	# Closest enemy to the cursor, then closest enemy in range of the hero.
-	var best: Player = null
-	var best_dist := CURSOR_PICK_RADIUS
+	# Only visible enemies already inside the skill's range: a targeted skill is never aimed at
+	# the cursor / an empty spot, it just can't be used while nobody is in range.
+	var in_range: Array[Player] = []
 	for other in _enemies():
 		if other.is_hidden_locally: continue
+		if _flat_distance(other.global_position, player.global_position) <= skill.cast_range:
+			in_range.append(other)
+	if in_range.is_empty():
+		return null
+	# Prefer the one clicked / under the aim point, else the closest to the hero
+	var collider = hit.get("collider")
+	if collider is Player and in_range.has(collider):
+		return collider
+	var best: Player = null
+	var best_dist := CURSOR_PICK_RADIUS
+	for other in in_range:
 		var d := _flat_distance(other.global_position, point)
 		if d <= best_dist:
 			best = other
 			best_dist = d
 	if best != null:
 		return best
-	best_dist = skill.cast_range
-	for other in _enemies():
-		if other.is_hidden_locally: continue
+	best_dist = INF
+	for other in in_range:
 		var d := _flat_distance(other.global_position, player.global_position)
-		if d <= best_dist:
+		if d < best_dist:
 			best = other
 			best_dist = d
 	return best
@@ -364,6 +377,8 @@ func request_cast(slot: int, target_peer: int, aim_point: Vector3) -> void:
 		if _flat_distance(target.global_position, player.global_position) > skill.cast_range + RANGE_TOLERANCE:
 			_fail(slot, "Out of range")
 			return
+		# A targeted skill always goes at its target (e.g. Ground Blast toward the enemy)
+		aim_point = target.global_position
 
 	# Attacking / casting reveals a stealthed hero (except casting the stealth itself)
 	if skill.buff != SkillData.Buff.STEALTH:
