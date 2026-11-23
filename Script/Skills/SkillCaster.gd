@@ -98,7 +98,7 @@ func _create_skill_bar() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not NetworkManager.is_mine(player.peer_id):
 		return
-	if not player.hero_spawner.is_game_started() or PauseMenu.is_open or MatchManager.is_over:
+	if not player.hero_spawner.is_game_started() or PauseMenu.is_open or MatchManager.is_over or MatchChat.is_typing:
 		_stop_aiming()
 		return
 	for i in mini(ACTIONS.size(), skills.size()):

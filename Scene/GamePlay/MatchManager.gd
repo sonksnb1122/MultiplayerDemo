@@ -62,6 +62,11 @@ func _ready() -> void:
 	_hud.name = "MatchHUD"
 	add_child(_hud)
 	_hud.setup(self)
+	# Chat, quick chat and map pings (same node path on every peer, for its RPCs)
+	var chat := MatchChat.new()
+	chat.name = "MatchChat"
+	add_child(chat)
+	chat.setup(self)
 	multiplayer.peer_disconnected.connect(_on_peer_left)
 	# New match ("Play again"): someone who left the previous one would never load it
 	_check_missing_players.call_deferred()

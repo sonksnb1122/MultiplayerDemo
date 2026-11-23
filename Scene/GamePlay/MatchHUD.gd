@@ -199,7 +199,7 @@ func _new_grid() -> GridContainer:
 func _process(delta: float) -> void:
 	if match_manager == null: return
 	# Scoreboard while TAB is held (not over the end screen)
-	var show_board := Input.is_key_pressed(KEY_TAB) and not _end_screen.visible
+	var show_board := Input.is_key_pressed(KEY_TAB) and not _end_screen.visible and not MatchChat.is_typing
 	if show_board != _board.visible:
 		_board.visible = show_board
 		if show_board:

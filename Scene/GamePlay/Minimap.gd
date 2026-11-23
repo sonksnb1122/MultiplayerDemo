@@ -3,6 +3,7 @@ extends Control
 ## Small map in the corner of the HUD.
 ## White dot = me, green dots = teammates, red dots = enemies.
 ## Positions are read from the heroes already synced on this peer, so it works on host and clients.
+## Click on it to ping that spot for your team (MatchChat); pings show as pulsing yellow rings.
 
 ## Half of the arena size in world units (ground is 120 x 120, centered at 0)
 @export var world_half_size := 60.0
@@ -27,7 +28,27 @@ var _redraw_timer := 0.0
 
 
 func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	tooltip_text = "Click: ping this spot for your team"
+
+
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		accept_event()
+		var chat := _get_chat()
+		if chat != null and not PauseMenu.is_open:
+			chat.request_ping(_map_to_world(event.position))
+
+
+func _get_chat() -> MatchChat:
+	var scene := get_tree().current_scene
+	return scene.get_node_or_null("MatchManager/MatchChat") as MatchChat if scene != null else null
+
+
+func _map_to_world(p: Vector2) -> Vector3:
+	var u := clampf(p.x / maxf(size.x, 1.0), 0.0, 1.0)
+	var v := clampf(p.y / maxf(size.y, 1.0), 0.0, 1.0)
+	return Vector3(u * world_half_size * 2.0 - world_half_size, 0.0, v * world_half_size * 2.0 - world_half_size)
 
 
 func _process(delta: float) -> void:
@@ -94,6 +115,15 @@ func _draw() -> void:
 		var a := _world_to_map(o.global_position - Vector3(half.x, 0, half.y))
 		var b := _world_to_map(o.global_position + Vector3(half.x, 0, half.y))
 		draw_rect(Rect2(a, (b - a).max(Vector2(1, 1))), COLOR_OBSTACLE)
+
+	# Team pings: a dot with a ring growing out of it
+	var chat := _get_chat()
+	if chat != null:
+		for ping in chat.pings:
+			var pp := _world_to_map(ping["pos"])
+			var phase := fmod((MatchChat.PING_TIME - float(ping["left"])) * 1.5, 1.0)
+			draw_arc(pp, 3.0 + phase * 9.0, 0, TAU, 24, Color(MatchChat.PING_COLOR, 1.0 - phase), 1.5, true)
+			draw_circle(pp, 2.5, MatchChat.PING_COLOR)
 
 	var spawner := _get_spawner()
 	if spawner == null: return

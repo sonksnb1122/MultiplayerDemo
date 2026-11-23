@@ -197,7 +197,7 @@ func init(hero_team_info: Dictionary):
 	
 func _input(event: InputEvent) -> void:
 	if not NetworkManager.is_mine(peer_id): return
-	if PauseMenu.is_open or MatchManager.is_over: return
+	if PauseMenu.is_open or MatchManager.is_over or MatchChat.is_typing: return
 	if not hero_spawner.is_game_started(): return
 	# Walking is done with the joystick / arrow keys. Right click on an enemy still attacks it.
 	if event.is_action_pressed("Moving"):
@@ -228,6 +228,9 @@ func attack_nearest(show_fail := true) -> bool:
 func _read_move_input() -> Vector2:
 	if not hero_spawner.is_game_started() or PauseMenu.is_open or MatchManager.is_over or is_dead():
 		return Vector2.ZERO
+	# Arrow keys don't walk while typing in the chat (the joystick still does)
+	if MatchChat.is_typing:
+		return joystick.direction.normalized() if joystick != null and is_instance_valid(joystick) else Vector2.ZERO
 	var keys := Vector2(
 		float(Input.is_physical_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_LEFT)),
 		float(Input.is_physical_key_pressed(KEY_DOWN)) - float(Input.is_physical_key_pressed(KEY_UP)))
