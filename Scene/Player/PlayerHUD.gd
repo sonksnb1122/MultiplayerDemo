@@ -19,6 +19,39 @@ func load_GUI():
 func get_skill_area() -> Control:
 	return get_node_or_null("Panel/SkillArea")
 
+var _xp_bar: ProgressBar
+var _hero_name := ""
+
+## Level in the name, stats and max hp of the current level, XP bar (thin, under the hp bar)
+func set_level(player) -> void:
+	if detail_name_label == null:
+		return
+	if _hero_name.is_empty():
+		_hero_name = detail_name_label.text
+	detail_name_label.text = "%s  Lv.%d" % [_hero_name, player.level]
+	detail_damage_label.text = "%d" % player.attack_damage()
+	detail_hp_bar.max_value = float(player.max_hp())
+	if _xp_bar == null:
+		_xp_bar = ProgressBar.new()
+		_xp_bar.show_percentage = false
+		_xp_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_xp_bar.position = Vector2(50, 30)
+		_xp_bar.size = Vector2(100, 3)
+		_xp_bar.custom_minimum_size = Vector2(0, 3)
+		var bg := StyleBoxFlat.new()
+		bg.bg_color = Color(0, 0, 0, 0.6)
+		var fill := StyleBoxFlat.new()
+		fill.bg_color = Color(1, 0.8, 0.25)
+		_xp_bar.add_theme_stylebox_override("background", bg)
+		_xp_bar.add_theme_stylebox_override("fill", fill)
+		$Panel.add_child(_xp_bar)
+	var next: int = player.xp_for_next_level()
+	if next <= 0:
+		_xp_bar.value = 100.0  # max level
+	else:
+		var base: int = player.xp_for_this_level()
+		_xp_bar.value = 100.0 * float(player.xp - base) / float(maxi(next - base, 1))
+
 func set_current_hp_details(value: int) -> void:
 	detail_hp_bar.value = float(value)
 	
@@ -28,6 +61,7 @@ func update_character_data_details(character_data: CharacterData) -> void:
 	detail_avatar.texture = tex
 	#name
 	detail_name_label.text = character_data.name
+	_hero_name = character_data.name
 	detail_damage_label.text = "%d" % character_data.damage
 	detail_speed_label.text =  "%d" % character_data.movement_speed
 	#hp_bar

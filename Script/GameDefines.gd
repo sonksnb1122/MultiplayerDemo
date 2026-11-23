@@ -30,6 +30,26 @@ const RESPAWN_BASE = 3.0
 const RESPAWN_PER_DEATH = 1.0
 const RESPAWN_MAX = 10.0
 
+# --- Levels in a match (Player.add_xp, MatchManager) ---
+## Total XP needed to reach level 2, 3, 4, 5, 6 (max level = size + 1)
+const LEVEL_XP = [80, 200, 350, 550, 800]
+## Every hero gets this much XP per second just by being in the match
+const XP_PER_SECOND = 2
+const KILL_XP = 100
+const ASSIST_XP = 50
+## Per level above 1: max hp and attack damage (also skills that use it) grow by these shares
+const HP_PER_LEVEL = 0.08
+const DAMAGE_PER_LEVEL = 0.06
+## The ultimate (R) unlocks at this level
+const ULTIMATE_LEVEL = 3
+
+# --- Runes (power-ups) appearing in the arena (MatchManager) ---
+const RUNE_FIRST_TIME = 40.0
+const RUNE_INTERVAL = 45.0
+const RUNE_PICK_RADIUS = 2.0
+## Places where a rune can appear (one at a time)
+const RUNE_SPOTS = [Vector3(0, 0, -26), Vector3(0, 0, 31), Vector3(-20, 0, 2.5), Vector3(20, 0, 2.5)]
+
 ## Melee heroes (no projectile) heal this share of their basic attack damage
 const MELEE_LIFESTEAL = 0.15
 

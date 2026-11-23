@@ -71,6 +71,12 @@ func _draw() -> void:
 		draw_circle(center, r, Color(c.r, c.g, c.b, 0.25))
 		draw_arc(center, r, 0, TAU, 24, c, 1.0)
 
+	# Rune on the ground: a diamond in its color
+	if match_manager != null and match_manager.rune_kind >= 0:
+		var rp := _world_to_map(match_manager.rune_position)
+		var rc: Color = MatchManager.RUNE_COLORS[match_manager.rune_kind]
+		draw_colored_polygon(PackedVector2Array([rp + Vector2(0, -4), rp + Vector2(4, 0), rp + Vector2(0, 4), rp + Vector2(-4, 0)]), rc)
+
 	# Bushes as dark green blocks
 	for node in get_tree().get_nodes_in_group("bush"):
 		var bush := node as Bush

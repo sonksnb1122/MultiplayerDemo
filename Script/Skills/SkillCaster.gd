@@ -16,6 +16,8 @@ signal cast_failed(slot: int, reason: String)
 const ACTIONS := [&"Skill1", &"Skill2", &"Skill3", &"Skill4", &"Dash"]
 const KEYS := [KEY_Q, KEY_W, KEY_E, KEY_R, KEY_SPACE]
 const KEY_LABELS := ["Q", "W", "E", "R", "SPC"]
+## Slot of the ultimate (R): locked until GameDefines.ULTIMATE_LEVEL
+const ULTIMATE_SLOT := 3
 ## When the mouse is not exactly on an enemy, pick the closest enemy within this distance of the cursor.
 const CURSOR_PICK_RADIUS := 4.0
 const RANGE_TOLERANCE := 1.0
@@ -88,7 +90,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	for i in mini(ACTIONS.size(), skills.size()):
 		if event.is_action_pressed(ACTIONS[i], false):
 			get_viewport().set_input_as_handled()
-			if skills[i].kind == SkillData.Kind.SELF_BUFF:
+			if not is_unlocked(i):
+				try_cast(i)  # the server answers "Unlocks at level ..."
+			elif skills[i].kind == SkillData.Kind.SELF_BUFF:
 				_stop_aiming()
 				try_cast(i)  # nothing to aim
 			else:
@@ -99,6 +103,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			_stop_aiming()
 			try_cast(i)
 			return
+
+
+## The ultimate needs level GameDefines.ULTIMATE_LEVEL (every peer knows the level)
+func is_unlocked(slot: int) -> bool:
+	return slot != ULTIMATE_SLOT or player.level >= GameDefines.ULTIMATE_LEVEL
 
 
 func _stop_aiming() -> void:
@@ -230,6 +239,9 @@ func request_cast(slot: int, target_peer: int, aim_point: Vector3) -> void:
 	if slot < 0 or slot >= skills.size() or MatchManager.is_over:
 		return
 	var skill := skills[slot]
+	if not is_unlocked(slot):
+		_fail(slot, "Unlocks at level %d" % GameDefines.ULTIMATE_LEVEL)
+		return
 	if _cooldown_left[slot] > 0.0:
 		_fail(slot, "Cooldown")
 		return
@@ -450,7 +462,7 @@ func _apply_to(target: Player, skill: SkillData) -> void:
 		target.status.apply_slow(skill.slow_percent, skill.slow_duration)
 	if skill.dot_duration > 0.0:
 		target.status.apply_dot(skill.dot_damage, skill.dot_interval, skill.dot_duration, player.peer_id)
-	var damage := skill.total_damage(player.character_data.damage)
+	var damage := skill.total_damage(player.attack_damage())
 	if damage > 0:
 		target.take_damage(damage, player.peer_id, Player.DamageKind.SKILL)
 

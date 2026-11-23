@@ -15,6 +15,7 @@ var SLOT_SIZE := Vector2(29, 29)
 var caster: SkillCaster
 var _overlays: Array[ColorRect] = []
 var _timers: Array[Label] = []
+var _locks: Array[Label] = []
 var _message: Label
 var _message_tween: Tween
 
@@ -125,6 +126,21 @@ func _build_slot(i: int, skill: SkillData) -> void:
 	slot.add_child(timer_label)
 	_timers.append(timer_label)
 
+	# Locked ultimate: dark with the level it needs
+	var lock := Label.new()
+	lock.text = "Lv%d" % GameDefines.ULTIMATE_LEVEL
+	lock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lock.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lock.size = SLOT_SIZE
+	lock.add_theme_font_size_override("font_size", 10)
+	lock.add_theme_constant_override("outline_size", 3)
+	lock.add_theme_color_override("font_outline_color", Color.BLACK)
+	lock.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+	lock.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lock.visible = false
+	slot.add_child(lock)
+	_locks.append(lock)
+
 	# Ring in the skill's color, drawn over the icon (outside the clipping slot)
 	var ring := Panel.new()
 	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -156,6 +172,14 @@ func _process(_delta: float) -> void:
 	if caster == null:
 		return
 	for i in _overlays.size():
+		if not caster.is_unlocked(i):
+			_overlays[i].visible = true
+			_overlays[i].size = SLOT_SIZE
+			_overlays[i].position = Vector2.ZERO
+			_timers[i].visible = false
+			_locks[i].visible = true
+			continue
+		_locks[i].visible = false
 		var left := caster.local_cooldown_left(i)
 		var cooling := left > 0.0
 		_overlays[i].visible = cooling

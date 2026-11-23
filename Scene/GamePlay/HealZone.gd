@@ -32,7 +32,7 @@ func _physics_process(delta: float) -> void:
 			continue
 		var d := Vector2(hero.global_position.x - global_position.x, hero.global_position.z - global_position.z)
 		if d.length() <= radius:
-			hero.heal(ceili(hero.character_data.hp * HEAL_PERCENT))
+			hero.heal(ceili(hero.max_hp() * HEAL_PERCENT))
 
 
 func _process(_delta: float) -> void:

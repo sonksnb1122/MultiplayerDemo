@@ -6,6 +6,8 @@ extends Node
 ##     GameDefines.ZONE_TICK seconds; when both teams are inside it is contested
 ##   - first team to GameDefines.SCORE_TO_WIN wins, otherwise the higher score when the time is up
 ##   - the respawn time grows with each death
+##   - heroes gain XP (time, kills, assists) and level up (Player.add_xp)
+##   - a rune (Haste / Power / Shield / Heal) appears at one of GameDefines.RUNE_SPOTS now and then
 ## The host sends scores / stats / events to every peer; MatchHUD draws them.
 
 signal scores_changed(left: int, right: int)
@@ -15,6 +17,9 @@ signal hero_killed(victim_peer: int, killer_peer: int, assist_peers: Array, resp
 signal match_ended(winner_team: int)
 
 enum ZoneState { NEUTRAL = -1, LEFT = 0, RIGHT = 1, CONTESTED = 2 }
+enum Rune { HASTE, POWER, SHIELD, HEAL }
+const RUNE_NAMES := ["Haste", "Power", "Shield", "Heal"]
+const RUNE_COLORS := [Color(0.3, 0.9, 1.0), Color(1.0, 0.35, 0.2), Color(0.7, 0.6, 1.0), Color(0.3, 1.0, 0.4)]
 
 ## No orders / casts once the match is over (read by Player and SkillCaster)
 static var is_over := false
@@ -36,6 +41,12 @@ var _running := false
 ## Every peer: the match has started (heroes spawned)
 var _started := false
 var _hud: MatchHUD
+## Every peer: the rune on the ground (-1 = none), its kind and where it is
+var rune_kind := -1
+var rune_position := Vector3.ZERO
+var _rune_node: Node3D
+var _elapsed := 0.0  # server
+var _next_rune_time := 0.0  # server
 var _zone_timer := 0.0
 var _zone_visual: Node3D
 var _zone_material: StandardMaterial3D
@@ -67,6 +78,8 @@ func _on_start_game() -> void:
 	_init_stats()
 	if not multiplayer.is_server(): return
 	_running = true
+	_elapsed = 0.0
+	_next_rune_time = GameDefines.RUNE_FIRST_TIME
 
 
 func _init_stats() -> void:
@@ -85,12 +98,18 @@ func _init_stats() -> void:
 func _on_play_time(time: int) -> void:
 	if not multiplayer.is_server() or not _running: return
 	sync_stats.rpc(stats)
+	# Everyone levels up a little just by playing
+	for hero in hero_spawner.player_list.values():
+		if is_instance_valid(hero):
+			hero.add_xp(GameDefines.XP_PER_SECOND)
 	if time >= GameDefines.MATCH_DURATION:
 		_end_match()
 
 
 func _physics_process(delta: float) -> void:
 	if not multiplayer.is_server() or not _running: return
+	_elapsed += delta
+	_update_rune()
 	var count := [0, 0]
 	for p in hero_spawner.player_list.values():
 		if not is_instance_valid(p) or not p.is_inside_tree() or p.is_dead(): continue
@@ -142,10 +161,124 @@ func on_hero_killed(victim: Player, attacker_peer: int) -> void:
 	if attacker_peer != 0:
 		stats[attacker_peer]["kills"] += 1
 		_add_score(stats[attacker_peer]["team"], GameDefines.KILL_SCORE)
+		_give_xp(attacker_peer, GameDefines.KILL_XP)
+	for peer in assists:
+		_give_xp(peer, GameDefines.ASSIST_XP)
 	victim.damage_log.clear()
 	var respawn := respawn_time_for(victim.peer_id)
 	announce_kill.rpc(victim.peer_id, attacker_peer, assists, respawn)
 	sync_stats.rpc(stats)
+
+
+func _give_xp(peer_id: int, amount: int) -> void:
+	var hero = hero_spawner.get_player(peer_id)
+	if hero != null:
+		hero.add_xp(amount)
+
+
+# ------------------------------------------------------------------ runes
+
+## Server: spawn a rune when it is time, give it to the first living hero who reaches it
+func _update_rune() -> void:
+	if rune_kind < 0:
+		if _elapsed >= _next_rune_time:
+			var spot: Vector3 = GameDefines.RUNE_SPOTS[randi() % GameDefines.RUNE_SPOTS.size()]
+			spawn_rune.rpc(randi() % RUNE_NAMES.size(), spot)
+		return
+	for hero in hero_spawner.player_list.values():
+		if not is_instance_valid(hero) or not hero.is_inside_tree() or hero.is_dead():
+			continue
+		var d := Vector2(hero.global_position.x - rune_position.x, hero.global_position.z - rune_position.z)
+		if d.length() <= GameDefines.RUNE_PICK_RADIUS:
+			_apply_rune(hero, rune_kind)
+			pick_rune.rpc(hero.peer_id)
+			_next_rune_time = _elapsed + GameDefines.RUNE_INTERVAL
+			return
+
+
+func _apply_rune(hero, kind: int) -> void:
+	match kind:
+		Rune.HASTE:
+			hero.status.apply_haste(1.5, 8.0)
+		Rune.POWER:
+			hero.status.add_empowered_attacks(5, 15)
+		Rune.SHIELD:
+			hero.status.add_shield(80, 10.0)
+		Rune.HEAL:
+			hero.heal(ceili(hero.max_hp() * 0.4))
+
+
+@rpc("authority", "call_local", "reliable")
+func spawn_rune(kind: int, position_on_ground: Vector3) -> void:
+	_clear_rune_node()
+	rune_kind = kind
+	rune_position = position_on_ground
+	_rune_node = _build_rune_node(kind)
+	add_child(_rune_node)
+	_rune_node.global_position = position_on_ground
+	_hud.add_feed_message("A %s rune appeared!" % RUNE_NAMES[kind])
+	Sfx.play_ui(get_tree(), "rune", -6.0)
+
+
+@rpc("authority", "call_local", "reliable")
+func pick_rune(peer_id: int) -> void:
+	if rune_kind < 0:
+		return
+	var kind := rune_kind
+	rune_kind = -1
+	Sfx.play_3d(get_tree(), "rune", rune_position + Vector3(0, 1, 0))
+	_clear_rune_node()
+	_hud.add_feed_message("%s took the %s rune" % [_player_name(peer_id), RUNE_NAMES[kind]])
+
+
+func _clear_rune_node() -> void:
+	if is_instance_valid(_rune_node):
+		_rune_node.queue_free()
+	_rune_node = null
+
+
+## A glowing gem that floats and spins, with a ring on the ground
+func _build_rune_node(kind: int) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Rune"
+	var color: Color = RUNE_COLORS[kind]
+	var gem := MeshInstance3D.new()
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.6
+	mesh.height = 1.4
+	mesh.radial_segments = 6
+	mesh.rings = 2
+	gem.mesh = mesh
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.emission_enabled = true
+	mat.emission = color
+	mat.emission_energy_multiplier = 2.0
+	gem.material_override = mat
+	gem.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	gem.position.y = 1.4
+	root.add_child(gem)
+	var ring := MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = 1.4
+	torus.outer_radius = 1.6
+	torus.rings = 32
+	torus.ring_segments = 4
+	ring.mesh = torus
+	ring.scale = Vector3(1, 0.1, 1)
+	ring.position.y = 0.1
+	var ring_mat := StandardMaterial3D.new()
+	ring_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	ring_mat.albedo_color = color
+	ring.material_override = ring_mat
+	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(ring)
+	var spin := gem.create_tween().set_loops()
+	spin.tween_property(gem, "rotation:y", TAU, 2.0).from(0.0)
+	var bob := gem.create_tween().set_loops()
+	bob.tween_property(gem, "position:y", 1.8, 0.8).set_trans(Tween.TRANS_SINE)
+	bob.tween_property(gem, "position:y", 1.4, 0.8).set_trans(Tween.TRANS_SINE)
+	return root
 
 
 ## Seconds before [param peer_id] respawns (grows with its deaths)

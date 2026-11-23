@@ -91,6 +91,9 @@ enum DamageKind { BASIC, SKILL, DOT, HEAL }
 
 var _flash_material: StandardMaterial3D
 var _step_timer := 0.0
+## Level in this match (server decides, synced to every peer by sync_level)
+var level := 1
+var xp := 0
 ## Sound of a melee basic attack landing, by hero id (ranged heroes use their shot sound)
 const MELEE_ATTACK_SOUNDS := {SkillDB.KNIGHT: "sword", SkillDB.BARBARIAN: "axe"}
 var _flash_tween: Tween
@@ -113,7 +116,7 @@ var _has_net_target := false
 # ---
 
 func _ready() -> void:
-	hp_bar.max_value = float(character_data.hp)
+	hp_bar.max_value = float(max_hp())
 	_refresh_hp_bar()
 	
 	if multiplayer.is_server(): 
@@ -178,7 +181,7 @@ func init(hero_team_info: Dictionary):
 	
 	spawn_position.z += GameDefines.DISTANCE_SPAWN_BETWEEN_PLAYERS * slot_index
 	
-	current_hp = character_data.hp
+	current_hp = max_hp()
 	
 func _input(event: InputEvent) -> void:
 	if not NetworkManager.is_mine(peer_id): return
@@ -326,7 +329,7 @@ func perform_attack() -> void:
 	#if attack_cooldown >= character_data.attack_speed:
 	if target_attack is Player:
 		var bonus := status.consume_empowered_attack()
-		var dmg := character_data.damage + bonus
+		var dmg := attack_damage() + bonus
 		attack_cooldown = 0
 		status.break_stealth()  # attacking reveals a stealthed hero
 		if BasicAttackFx.has_projectile(character_data.id):
@@ -394,6 +397,53 @@ func _end_dash() -> void:
 	_dash_on_end = Callable()
 	if cb.is_valid():
 		cb.call()
+
+# --- LEVELS ---
+
+func max_hp() -> int:
+	return int(round(character_data.hp * (1.0 + GameDefines.HP_PER_LEVEL * (level - 1))))
+
+func attack_damage() -> int:
+	return int(round(character_data.damage * (1.0 + GameDefines.DAMAGE_PER_LEVEL * (level - 1))))
+
+## XP needed for the next level (0 at max level) / total XP of the current level
+func xp_for_next_level() -> int:
+	return GameDefines.LEVEL_XP[level - 1] if level - 1 < GameDefines.LEVEL_XP.size() else 0
+
+func xp_for_this_level() -> int:
+	return GameDefines.LEVEL_XP[level - 2] if level >= 2 else 0
+
+## Server: gain XP, level up (more max hp, healed by the difference) as many times as it reaches
+func add_xp(amount: int) -> void:
+	if not multiplayer.is_server() or amount <= 0: return
+	xp += amount
+	var leveled := false
+	while xp_for_next_level() > 0 and xp >= xp_for_next_level():
+		var old_max := max_hp()
+		level += 1
+		leveled = true
+		if not is_dead():
+			current_hp = mini(current_hp + max_hp() - old_max, max_hp())
+	sync_level.rpc(peer_id, level, xp)
+	if leveled and not is_dead():
+		set_current_hp.rpc(peer_id, 0, current_hp, DamageKind.HEAL)
+
+@rpc("authority", "call_local", "reliable")
+func sync_level(object_target_peer_id: int, new_level: int, new_xp: int) -> void:
+	if peer_id != object_target_peer_id: return
+	var leveled_up := new_level > level
+	level = new_level
+	xp = new_xp
+	hp_bar.max_value = float(max_hp())
+	_refresh_hp_bar()
+	if player_HUD != null:
+		player_HUD.set_level(self)
+	if leveled_up and not is_hidden_locally:
+		_level_up_feedback()
+
+func _level_up_feedback() -> void:
+	status.popup("LEVEL %d!" % level, Color(1, 0.85, 0.3))
+	Sfx.play_3d(get_tree(), "level_up", global_position + Vector3(0, 1.5, 0))
 
 ## Server: play [param animation_name] on every peer and keep it for [param duration] seconds
 ## (moving / attacking don't replace it meanwhile)
@@ -564,7 +614,7 @@ func _on_timer_respawn_timeout():
 	respawn_timer.stop()
 	player_state = PlayerState.IDLE
 	_last_sent_anim = "idle"  # trigger_respawn plays "idle" on every peer
-	trigger_respawn.rpc(peer_id, spawn_position, character_data.hp)
+	trigger_respawn.rpc(peer_id, spawn_position, max_hp())
 	
 # --- RPCs ----
 
@@ -633,9 +683,9 @@ func _update_vision() -> void:
 
 ## Server: heal [param amount] hp (healing zone)
 func heal(amount: int) -> void:
-	if not multiplayer.is_server() or is_dead() or current_hp >= character_data.hp: return
+	if not multiplayer.is_server() or is_dead() or current_hp >= max_hp(): return
 	var before := current_hp
-	current_hp = mini(current_hp + amount, character_data.hp)
+	current_hp = mini(current_hp + amount, max_hp())
 	set_current_hp.rpc(peer_id, current_hp - before, current_hp, DamageKind.HEAL)
 
 @rpc("authority", "call_local", "reliable")
@@ -678,6 +728,7 @@ func on_ready(object_peer_id: int):
 	# Send the current position, hp, direction and animation to the sender
 	set_object_position.rpc_id(peer_id_sender, peer_id, global_position)
 	set_current_hp.rpc_id(peer_id_sender, peer_id, 0, current_hp, DamageKind.BASIC)
+	sync_level.rpc_id(peer_id_sender, peer_id, level, xp)
 	if _last_sent_dir != Vector3.ZERO:
 		set_object_direction.rpc_id(peer_id_sender, peer_id, global_position + _last_sent_dir)
 	if _last_sent_anim != "":
@@ -871,7 +922,7 @@ func _hit_feedback(dmg: int, kind: int) -> void:
 	if NetworkManager.is_mine(peer_id):
 		var cam := get_viewport().get_camera_3d()
 		if cam != null and cam.has_method("shake"):
-			cam.call("shake", clampf(0.15 + float(dmg) / character_data.hp * 2.0, 0.15, 0.9), 0.25)
+			cam.call("shake", clampf(0.15 + float(dmg) / max_hp() * 2.0, 0.15, 0.9), 0.25)
 
 func _flash_white() -> void:
 	if _flash_material == null:

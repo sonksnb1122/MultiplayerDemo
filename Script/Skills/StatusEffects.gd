@@ -303,6 +303,11 @@ func _hud_bbcode(s: Dictionary) -> String:
 	return "  ".join(parts)
 
 
+## Same floating text as the status popups (Stunned, Slowed...), e.g. "LEVEL 3!"
+func popup(text: String, color: Color) -> void:
+	_popup(text, color, 0.0)
+
+
 func _popup(text: String, color: Color, delay: float) -> void:
 	var label := Label3D.new()
 	label.text = text
@@ -310,8 +315,8 @@ func _popup(text: String, color: Color, delay: float) -> void:
 	label.no_depth_test = true
 	label.render_priority = 10
 	label.outline_render_priority = 9
-	label.font_size = 160
-	label.outline_size = 36
+	label.font_size = 240
+	label.outline_size = 54
 	label.modulate = Color(color, 0.0)
 	label.outline_modulate = Color(0, 0, 0, 0.0)
 	label.position = Vector3(0, POPUP_START_HEIGHT, 0)

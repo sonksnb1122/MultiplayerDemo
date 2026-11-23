@@ -24,6 +24,9 @@ const SOUNDS := {
 	"charge_rage": preload("res://Asset/Audio/Effects/power_up.wav"),
 	"charge_guard": preload("res://Asset/Audio/Effects/power_up_2.wav"),
 	"charge_speed": preload("res://Asset/Audio/Effects/grow_big.wav"),
+	# Levels / runes
+	"level_up": preload("res://Asset/Audio/Effects/brass_chime_positive.wav"),
+	"rune": preload("res://Asset/Audio/Effects/power_up_2.wav"),
 	"shield_up": preload("res://Asset/Audio/Effects/weapon_equip.wav"),
 	"swipe": preload("res://Asset/Audio/Effects/swipe.wav"),
 	"blast": preload("res://Asset/Audio/Effects/explosion_small.wav"),
