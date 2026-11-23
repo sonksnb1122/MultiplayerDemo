@@ -92,7 +92,7 @@ func set_status(bbcode: String) -> void:
 		detail_status_label.add_theme_constant_override("outline_size", 5)
 		detail_status_label.add_theme_color_override("font_outline_color", Color.BLACK)
 		detail_name_label.add_child(detail_status_label)
-	# Just below the info panel (top-left corner), so it does not cover the hp bar / stats
-	detail_status_label.position = Vector2(-50, 54)
+	# Below the info panel, right of the pause button (which sits under the avatar)
+	detail_status_label.position = Vector2(-8, 62)
 	detail_status_label.text = bbcode
 	detail_status_label.visible = not bbcode.is_empty()

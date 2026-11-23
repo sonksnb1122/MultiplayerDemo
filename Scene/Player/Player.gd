@@ -52,6 +52,18 @@ var player_HUD: PlayerHUD
 # Skill components, created in set_character_data() with the same name on every peer
 var status: StatusEffects
 var skill_caster: SkillCaster
+## Owner: on-screen joystick (made by SkillCaster with the battle buttons)
+var joystick: VirtualJoystick
+
+## Owner: key that attacks the closest enemy (same as the on-screen attack button)
+const ATTACK_KEY := KEY_A
+## Attack button: enemies this much farther than the attack range are still picked
+const ATTACK_ASSIST_RANGE := 4.0
+## Owner: last walking direction sent to the server, and a small gap between turn updates
+var _sent_move := Vector2.ZERO
+var _move_send_timer := 0.0
+## Server: walking direction from the joystick / arrow keys (x = world x, y = world z), zero = none
+var _move_dir := Vector2.ZERO
 
 # Variable for networking
 var peer_id: int
@@ -186,9 +198,55 @@ func init(hero_team_info: Dictionary):
 func _input(event: InputEvent) -> void:
 	if not NetworkManager.is_mine(peer_id): return
 	if PauseMenu.is_open or MatchManager.is_over: return
-	if hero_spawner.is_game_started():
-		if event.is_action("Moving"):
-			shoot_ray_cast()
+	if not hero_spawner.is_game_started(): return
+	# Walking is done with the joystick / arrow keys. Right click on an enemy still attacks it.
+	if event.is_action_pressed("Moving"):
+		shoot_ray_cast()
+	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == ATTACK_KEY:
+		attack_nearest()
+
+## Owner: attack the closest visible enemy around the hero (attack button / A key).
+## Returns false (and shows "No target") when nobody is close enough.
+func attack_nearest(show_fail := true) -> bool:
+	var best: Player = null
+	var best_dist: float = character_data.attack_range + ATTACK_ASSIST_RANGE
+	for other in hero_spawner.player_list.values():
+		if not is_instance_valid(other) or not (other is Player): continue
+		if not is_enemy(other) or other.is_dead() or other.is_hidden_locally: continue
+		var d := _flat_distance(other.global_position, global_position)
+		if d <= best_dist:
+			best = other
+			best_dist = d
+	if best == null:
+		if show_fail and skill_caster != null:
+			skill_caster.cast_failed.emit(-1, "No target")
+		return false
+	hero_clicked.rpc_id(GameDefines.HOST_ID, best.peer_id)
+	return true
+
+## Owner: walking direction from the arrow keys or the joystick (screen up = -z)
+func _read_move_input() -> Vector2:
+	if not hero_spawner.is_game_started() or PauseMenu.is_open or MatchManager.is_over or is_dead():
+		return Vector2.ZERO
+	var keys := Vector2(
+		float(Input.is_physical_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_LEFT)),
+		float(Input.is_physical_key_pressed(KEY_DOWN)) - float(Input.is_physical_key_pressed(KEY_UP)))
+	if keys != Vector2.ZERO:
+		return keys.normalized()
+	if joystick != null and is_instance_valid(joystick):
+		return joystick.direction.normalized()
+	return Vector2.ZERO
+
+## Owner: send the walking direction when it starts, stops or turns
+func _update_move_input(delta: float) -> void:
+	_move_send_timer -= delta
+	var dir := _read_move_input()
+	var start_stop := (dir == Vector2.ZERO) != (_sent_move == Vector2.ZERO)
+	var turned := dir != Vector2.ZERO and _sent_move != Vector2.ZERO and absf(dir.angle_to(_sent_move)) > deg_to_rad(3.0)
+	if start_stop or (turned and _move_send_timer <= 0.0):
+		_sent_move = dir
+		_move_send_timer = 0.05
+		move_input.rpc_id(GameDefines.HOST_ID, dir)
 
 ## Raycast from the mouse cursor into the world. Returns {} or {"collider", "position", ...}.
 func mouse_raycast(exclude_self := false) -> Dictionary:
@@ -214,10 +272,9 @@ func shoot_ray_cast():
 	var raycast_result = mouse_raycast()
 	if !raycast_result.is_empty():
 		var coll = raycast_result.get("collider")
-		if coll is Player:
+		# Only enemies: clicking the ground no longer moves the hero
+		if coll is Player and is_enemy(coll):
 			hero_clicked.rpc_id(GameDefines.HOST_ID, coll.peer_id)
-		else:
-			position_clicked.rpc_id(GameDefines.HOST_ID, raycast_result["position"])
 
 ## The hp bar is drawn in a SubViewport: render it only when it changed instead of every frame
 func _refresh_hp_bar() -> void:
@@ -303,8 +360,14 @@ func _physics_process(delta: float) -> void:
 	# move player to target position
 	if attack_cooldown < character_data.attack_speed:
 		attack_cooldown += delta
+	# Joystick still held after a cast / dash / respawn: keep walking
+	if _move_dir != Vector2.ZERO and player_state == PlayerState.IDLE:
+		player_state = PlayerState.MOVING
 	if player_state == PlayerState.MOVING:
-		move_to_target(target_position)
+		if _move_dir != Vector2.ZERO:
+			_move_direct()
+		else:
+			move_to_target(target_position)
 	elif player_state == PlayerState.ATTACK and (not is_instance_valid(target_attack) or not target_attack is Player or target_attack.is_dead() or Vision.is_hidden(target_attack, team_side, hero_spawner.player_list.values())):
 		# The target died, left the game or went out of sight: stop attacking, wait for the next order
 		player_state = PlayerState.IDLE
@@ -462,6 +525,39 @@ func attack_after_dash(target: Player) -> void:
 	target_position = target.position
 	player_state = PlayerState.ATTACK
 
+## Server: walk along the joystick direction (slides along props)
+func _move_direct() -> void:
+	var speed := get_move_speed()
+	var d := Vector3(_move_dir.x, 0.0, _move_dir.y)
+	velocity.x = d.x * speed
+	velocity.z = d.z * speed
+	_send_direction(global_position + d)
+	_send_animation("moving")
+	move_and_slide()
+
+## Owner -> server: walking direction from the joystick / arrow keys, zero when released
+@rpc("any_peer", "call_local", "reliable")
+func move_input(dir: Vector2) -> void:
+	if not multiplayer.is_server(): return
+	if not _is_sender_owner("move_input"): return
+	_move_dir = dir.normalized() if dir.length() > 0.01 else Vector2.ZERO
+	if is_dead(): return
+	if _move_dir != Vector2.ZERO:
+		# Walking cancels the attack order
+		target_attack = null
+		_clear_path()
+		_last_sent_dir = Vector3.ZERO  # turn at once
+		_set_order(PlayerState.MOVING)
+	else:
+		target_position = global_position
+		if player_state == PlayerState.MOVING:
+			player_state = PlayerState.IDLE
+			velocity.x = 0.0
+			velocity.z = 0.0
+			_send_animation("idle")
+		elif player_state == PlayerState.CASTING and state_before_cast == PlayerState.MOVING:
+			state_before_cast = PlayerState.IDLE
+
 func get_move_speed() -> float:
 	return character_data.movement_speed * status.move_speed_multiplier()
 
@@ -557,6 +653,8 @@ func _sync_transform_to_clients(delta: float) -> void:
 # --- CLIENT SMOOTHING ---
 
 func _process(delta: float) -> void:
+	if NetworkManager.is_mine(peer_id):
+		_update_move_input(delta)
 	_play_footsteps(delta)
 	_vision_timer -= delta
 	if _vision_timer <= 0.0:
@@ -761,6 +859,7 @@ func hero_clicked(peer_id_object_clicked: int):
 	if hero_is_clicked == null or hero_is_clicked.is_dead(): return
 	if Vision.is_hidden(hero_is_clicked, team_side, get_parent().player_list.values()): return
 	if hero_is_clicked.team_side != team_side:
+		_move_dir = Vector2.ZERO  # attacking stops the joystick walk until it is moved again
 		target_attack = hero_is_clicked
 		target_position = hero_is_clicked.position
 

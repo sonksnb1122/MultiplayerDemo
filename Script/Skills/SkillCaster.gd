@@ -18,6 +18,9 @@ const KEYS := [KEY_Q, KEY_W, KEY_E, KEY_R, KEY_SPACE]
 const KEY_LABELS := ["Q", "W", "E", "R", "SPC"]
 ## Slot of the ultimate (R): locked until GameDefines.ULTIMATE_LEVEL
 const ULTIMATE_SLOT := 3
+## Slot of the Dash (Space): no aiming, it goes the way the hero walks (joystick / arrow keys),
+## or the way it faces when standing still
+const DASH_SLOT := 4
 ## When the mouse is not exactly on an enemy, pick the closest enemy within this distance of the cursor.
 const CURSOR_PICK_RADIUS := 4.0
 const RANGE_TOLERANCE := 1.0
@@ -31,6 +34,12 @@ var _skill_bar: SkillBar
 ## Owner: slot being aimed (key held), -1 = none
 var _aiming := -1
 var _indicator: SkillIndicator
+## Owner: aiming with an on-screen skill button (drag away from it) instead of the mouse.
+## _touch_vec: drag from the button, length 0..1 (1 = full range).
+var _touch_aim := false
+var _touch_vec := Vector2.ZERO
+## A tap (drag shorter than this) aims at the closest enemy, or straight ahead
+const TAP_DEAD_ZONE := 0.2
 ## Server: skill shots in flight {pos, dir, left, hit (peer ids), skill}
 var _line_shots: Array = []
 
@@ -77,6 +86,11 @@ func _create_skill_bar() -> void:
 	else:
 		player.player_HUD.add_child(_skill_bar)
 	_skill_bar.setup(self)
+	# Joystick to walk (bottom-left)
+	var stick := VirtualJoystick.new()
+	stick.name = "Joystick"
+	player.player_HUD.add_child(stick)
+	player.joystick = stick
 
 
 # ---------------------------------------------------------------- owner input
@@ -92,11 +106,15 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			if not is_unlocked(i):
 				try_cast(i)  # the server answers "Unlocks at level ..."
+			elif _is_move_dash(i):
+				_stop_aiming()
+				try_cast(i, {"position": _dash_point(i)})
 			elif skills[i].kind == SkillData.Kind.SELF_BUFF:
 				_stop_aiming()
 				try_cast(i)  # nothing to aim
 			else:
 				_aiming = i
+				_touch_aim = false
 			return
 		if event.is_action_released(ACTIONS[i]) and _aiming == i:
 			get_viewport().set_input_as_handled()
@@ -112,6 +130,8 @@ func is_unlocked(slot: int) -> bool:
 
 func _stop_aiming() -> void:
 	_aiming = -1
+	_touch_aim = false
+	_touch_vec = Vector2.ZERO
 	if _indicator != null:
 		_indicator.hide_indicator()
 
@@ -125,7 +145,7 @@ func _update_indicator() -> void:
 		return
 	var skill := skills[_aiming]
 	var hero := player.global_position
-	var hit := player.mouse_raycast()
+	var hit := _aim_hit()
 	var point: Vector3 = hit.get("position", hero)
 	var center := hero
 	match skill.kind:
@@ -168,14 +188,16 @@ func _clamp_to_range(point: Vector3, max_range: float) -> Vector3:
 	return hero + d
 
 
-func try_cast(slot: int) -> void:
+## [param hit]: where it is aimed ({"position"}, maybe "collider"); empty = under the mouse
+func try_cast(slot: int, hit: Dictionary = {}) -> void:
 	if slot < 0 or slot >= skills.size():
 		return
 	if local_cooldown_left(slot) > 0.0:
 		cast_failed.emit(slot, "Cooldown")
 		return
 	var skill := skills[slot]
-	var hit := player.mouse_raycast()
+	if hit.is_empty():
+		hit = player.mouse_raycast()
 	var point: Vector3 = hit.get("position", player.global_position)
 	var target_peer := -1
 	if skill.is_targeted():
@@ -185,6 +207,89 @@ func try_cast(slot: int) -> void:
 			return
 		target_peer = target.peer_id
 	request_cast.rpc_id(GameDefines.HOST_ID, slot, target_peer, point)
+
+
+# ---------------------------------------------------------------- on-screen buttons (owner)
+
+## The on-screen buttons only work for the local hero during the fight
+func can_take_input() -> bool:
+	return NetworkManager.is_mine(player.peer_id) and player.hero_spawner.is_game_started() \
+			and not PauseMenu.is_open and not MatchManager.is_over and not player.is_dead()
+
+
+## Skill button pressed: self buffs (and locked skills) go at once, the others start aiming
+func touch_press(slot: int) -> void:
+	if slot < 0 or slot >= skills.size() or not can_take_input():
+		return
+	if not is_unlocked(slot) or skills[slot].kind == SkillData.Kind.SELF_BUFF:
+		_stop_aiming()
+		try_cast(slot)  # the server answers "Unlocks at level ..." for a locked one
+		return
+	if _is_move_dash(slot):
+		_stop_aiming()
+		try_cast(slot, {"position": _dash_point(slot)})
+		return
+	_aiming = slot
+	_touch_aim = true
+	_touch_vec = Vector2.ZERO
+
+
+## [param drag]: from the button center, 1 = full range (longer is cut to 1)
+func touch_drag(slot: int, drag: Vector2) -> void:
+	if _aiming == slot and _touch_aim:
+		_touch_vec = drag.limit_length(1.0)
+
+
+func touch_release(slot: int) -> void:
+	if _aiming != slot or not _touch_aim:
+		return
+	var hit := _aim_hit()
+	_stop_aiming()
+	try_cast(slot, hit)
+
+
+## The Dash slot (a dash without a target) is cast at once along the walking direction
+func _is_move_dash(slot: int) -> bool:
+	return slot == DASH_SLOT and skills[slot].kind == SkillData.Kind.DASH and not skills[slot].needs_target
+
+
+## Where the Dash ends: full range along the joystick / arrow keys, else along the facing
+func _dash_point(slot: int) -> Vector3:
+	var walk: Vector2 = player._read_move_input()
+	var dir := Vector3(walk.x, 0.0, walk.y) if walk != Vector2.ZERO else player.facing_direction()
+	return player.global_position + dir.normalized() * skills[slot].cast_range
+
+
+func cancel_aim() -> void:
+	_stop_aiming()
+
+
+## Where the skill being aimed points: the drag of the on-screen button, or the mouse
+func _aim_hit() -> Dictionary:
+	if _touch_aim and _aiming >= 0:
+		return {"position": _touch_point(_aiming)}
+	return player.mouse_raycast()
+
+
+func _touch_point(slot: int) -> Vector3:
+	var skill := skills[slot]
+	var hero := player.global_position
+	var reach := maxf(skill.cast_range, 3.0)
+	if _touch_vec.length() < TAP_DEAD_ZONE:
+		# Tap: the closest enemy in reach, else straight ahead
+		var best: Player = null
+		var best_dist := reach + RANGE_TOLERANCE
+		for other in _enemies():
+			if other.is_hidden_locally: continue
+			var d := _flat_distance(other.global_position, hero)
+			if d <= best_dist:
+				best = other
+				best_dist = d
+		if best != null:
+			return best.global_position
+		return hero + player.facing_direction() * reach
+	# Screen right = world +x, screen down = world +z (the camera looks toward -z)
+	return hero + Vector3(_touch_vec.x, 0.0, _touch_vec.y) * reach
 
 
 func local_cooldown_left(slot: int) -> float:

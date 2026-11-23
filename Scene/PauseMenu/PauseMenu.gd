@@ -9,7 +9,7 @@ static var is_open := false
 @onready var root: Control = $Root
 @onready var exit_button: Button = $Root/Center/Panel/Margin/VBox/ExitButton
 @onready var quit_button: Button = $Root/Center/Panel/Margin/VBox/QuitButton
-## Always-visible button in the bottom-left corner: pause icon opens the menu, play icon closes it.
+## Always-visible small button under the hero avatar (top-left): pause icon opens the menu, play icon closes it.
 @onready var pause_button: TextureButton = $PauseButton
 
 const PAUSE_ICON := preload("res://Asset/Art/Branding/btn_pause.png")
