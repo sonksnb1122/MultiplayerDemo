@@ -141,7 +141,7 @@ func _build_attack_button() -> void:
 	_attack_holder = _make_holder(ATTACK_CENTER, d)
 	var bg := Panel.new()
 	bg.mouse_filter = Control.MOUSE_FILTER_PASS
-	bg.tooltip_text = "Đánh thường [A]\nĐánh kẻ địch gần nhất"
+	bg.tooltip_text = "Attack [A]\nAttacks the closest enemy"
 	bg.size = size_px
 	bg.add_theme_stylebox_override("panel", _circle_style(Color(0.07, 0.11, 0.14, 0.82), int(d / 2.0) + 1))
 	_attack_holder.add_child(bg)
@@ -175,7 +175,7 @@ func _build_slot(i: int, skill: SkillData) -> void:
 	# Round slot: the background circle clips everything inside it (icon, cooldown shade)
 	var slot := Panel.new()
 	slot.mouse_filter = Control.MOUSE_FILTER_PASS
-	slot.tooltip_text = "%s [%s]\n%s\nHồi chiêu: %ds" % [skill.display_name, SkillCaster.KEY_LABELS[i], skill.description, int(skill.cooldown)]
+	slot.tooltip_text = "%s [%s]\n%s\nCooldown: %ds" % [skill.display_name, SkillCaster.KEY_LABELS[i], skill.description, int(skill.cooldown)]
 	slot.size = size_px
 	slot.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
 	slot.add_theme_stylebox_override("panel", _circle_style(skill.color.darkened(0.35), int(d / 2.0) + 1))
