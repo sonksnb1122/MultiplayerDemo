@@ -27,6 +27,7 @@ static func play_menu(tree: SceneTree) -> void:
 	if "loop" in stream:
 		stream.set("loop", true)
 	player = AudioStreamPlayer.new()
+	player.bus = GraphicsSettings.MUSIC_BUS
 	player.name = NODE_NAME
 	player.stream = stream
 	player.volume_db = -40.0

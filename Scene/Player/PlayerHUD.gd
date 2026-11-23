@@ -92,7 +92,47 @@ func set_status(bbcode: String) -> void:
 		detail_status_label.add_theme_constant_override("outline_size", 5)
 		detail_status_label.add_theme_color_override("font_outline_color", Color.BLACK)
 		detail_name_label.add_child(detail_status_label)
-	# Below the info panel, right of the pause button (which sits under the avatar)
-	detail_status_label.position = Vector2(-8, 62)
+	# Below the info panel, right of the pause and Auto buttons (under the avatar)
+	detail_status_label.position = Vector2(32, 62)
 	detail_status_label.text = bbcode
 	detail_status_label.visible = not bbcode.is_empty()
+
+
+# --- AUTO PLAY BUTTON ---
+
+const AUTO_FONT := preload("res://Asset/Art/UI/Fonts/RussoOne_Original.ttf")
+var _auto_button: Button
+var _auto_player
+
+
+## Round "Auto" button right of the pause button: the hero plays by itself (bot AI);
+## moving with the joystick / arrow keys takes the control back
+func add_auto_button(player) -> void:
+	_auto_player = player
+	_auto_button = Button.new()
+	_auto_button.text = "Auto"
+	_auto_button.focus_mode = Control.FOCUS_NONE
+	_auto_button.position = Vector2(52, 66)
+	_auto_button.size = Vector2(34, 34)
+	_auto_button.tooltip_text = "Auto play: your hero fights by itself\nMove to take the control back"
+	_auto_button.add_theme_font_override("font", AUTO_FONT)
+	_auto_button.add_theme_font_size_override("font_size", 9)
+	add_child(_auto_button)
+	_auto_button.pressed.connect(func() -> void:
+		if not PauseMenu.is_open and not MatchManager.is_over:
+			_auto_player.request_auto.rpc_id(GameDefines.HOST_ID, not _auto_player.auto_enabled))
+	player.auto_changed.connect(_on_auto_changed)
+	_on_auto_changed(false)
+
+
+func _on_auto_changed(on: bool) -> void:
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(0.15, 0.45, 0.2, 0.9) if on else Color(0.06, 0.1, 0.13, 0.8)
+	normal.border_color = Color(0.5, 1.0, 0.55) if on else Color(0.85, 0.7, 0.3, 0.9)
+	normal.set_border_width_all(2)
+	normal.set_corner_radius_all(17)
+	normal.anti_aliasing = true
+	_auto_button.add_theme_stylebox_override("normal", normal)
+	_auto_button.add_theme_stylebox_override("hover", normal)
+	_auto_button.add_theme_stylebox_override("pressed", normal)
+	_auto_button.add_theme_color_override("font_color", Color(0.75, 1, 0.75) if on else Color.WHITE)

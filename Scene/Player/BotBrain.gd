@@ -5,8 +5,9 @@ extends Node
 ## SkillCaster.server_cast), so everything else (sync, damage, cooldowns...) works the same.
 ##
 ## A few times per second it decides:
-##   low on hp      -> walk back to its spawn until it has healed a bit (Normal / Hard)
-##   enemy in sight -> use a skill that fits now, then keep basic-attacking it
+##   low on hp      -> walk to the middle of its team's heal zone and heal up (Normal / Hard)
+##   enemy in sight -> use a skill that fits now, then keep basic-attacking it; an enemy back
+##                     in its own heal zone is left alone (another enemy nearby, or the zone)
 ##   nobody around  -> pick up the rune if one is close, else stand in the King of the Hill zone
 
 ## Per difficulty (MatchSettings.bot_difficulty): Easy, Normal, Hard
@@ -21,6 +22,8 @@ const RETREAT_UNTIL := 0.7
 const ZONE_REPICK := 4.0
 const ULTIMATE_SLOT := 3
 const DASH_SLOT := 4
+## An enemy this close to (or inside) its own heal zone counts as "home": not chased
+const BASE_MARGIN := 2.0
 
 var player: Player
 var _cfg: Dictionary
@@ -63,17 +66,21 @@ func _think() -> void:
 
 	if _retreating:
 		_target = null
+		var heal_point := _heal_point()
 		var chaser := _find_target(8.0)
 		if chaser != null and _cfg["dash"]:
-			_try_dash_toward(player.spawn_position)
-		_go_to(player.spawn_position)
+			_try_dash_toward(heal_point)
+		_go_to(heal_point)
 		return
 
 	var target := _find_target(float(_cfg["aggro"]))
 	if target != null:
 		_fight(target)
 		return
-	_target = null
+	# Nobody to fight (or the target ran home): stop chasing, back to the zone / rune
+	if _target != null or (player.target_attack is Player and player.player_state == Player.PlayerState.ATTACK):
+		_target = null
+		_zone_spot_left = 0.0
 	_wander()
 
 
@@ -99,7 +106,20 @@ func _find_target(radius: float) -> Player:
 
 func _is_valid_target(other, heroes: Array) -> bool:
 	return other != null and is_instance_valid(other) and other is Player and player.is_enemy(other) \
-			and not other.is_dead() and not Vision.is_hidden(other, player.team_side, heroes)
+			and not other.is_dead() and not Vision.is_hidden(other, player.team_side, heroes) \
+			and not _is_home(other)
+
+
+## True when [param hero] stands in (or right next to) its own team's heal zone
+func _is_home(hero: Player) -> bool:
+	for zone in player.get_tree().get_nodes_in_group("heal_zone"):
+		var heal := zone as HealZone
+		if heal == null or heal.team != hero.team_side:
+			continue
+		var d := Vector2(hero.global_position.x - heal.global_position.x, hero.global_position.z - heal.global_position.z).length()
+		if d <= heal.radius + BASE_MARGIN:
+			return true
+	return false
 
 
 func _fight(target: Player) -> void:
@@ -199,6 +219,15 @@ func _go_to(point: Vector3) -> void:
 	if player.player_state == Player.PlayerState.MOVING and Vector2(player.target_position.x - point.x, player.target_position.z - point.z).length() < 1.5:
 		return
 	player.order_move(point)
+
+
+## Middle of this team's heal zone (well inside it, so the hero really heals), else the spawn
+func _heal_point() -> Vector3:
+	for zone in player.get_tree().get_nodes_in_group("heal_zone"):
+		var heal := zone as HealZone
+		if heal != null and heal.team == player.team_side:
+			return Vector3(heal.global_position.x, 0.0, heal.global_position.z)
+	return player.spawn_position
 
 
 func _dist(point: Vector3) -> float:

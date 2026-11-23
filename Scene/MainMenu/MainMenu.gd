@@ -30,3 +30,9 @@ func _on_quit_button_pressed() -> void:
 func _on_lobby_scene_back_to_main_menu() -> void:
 	menu_hub.visible = true
 	lobby_scene.visible = false
+
+
+
+## Graphics / sound options window
+func _on_options_button_pressed() -> void:
+	OptionsMenu.open(get_tree())

@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://daupcqnqk1rtr"]
+[gd_scene load_steps=14 format=3 uid="uid://daupcqnqk1rtr"]
 
 [ext_resource type="Script" uid="uid://sh85kbirkxo1" path="res://Scene/MainMenu/MainMenu.gd" id="1_x4kti"]
 [ext_resource type="Texture2D" path="res://Asset/Art/Branding/Background.jpg" id="2_f0l23"]
@@ -9,6 +9,24 @@
 [ext_resource type="StyleBox" uid="uid://dr45bgoisb13b" path="res://Resources/GUI/BlueButtonPressed.tres" id="6_auexh"]
 [ext_resource type="StyleBox" uid="uid://bmic23ln30jmq" path="res://Resources/GUI/RedButtonNormal.tres" id="7_lp0kt"]
 [ext_resource type="StyleBox" uid="uid://dwd0ucj0jl2vi" path="res://Resources/GUI/RedButtonPressed.tres" id="8_m71po"]
+[ext_resource type="Texture2D" path="res://Asset/Art/UI/Kenney/button_yellow.png" id="9_ytex"]
+[ext_resource type="Texture2D" path="res://Asset/Art/UI/Kenney/button_yellow_pressed.png" id="10_yptex"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBox_options"]
+texture = ExtResource("9_ytex")
+texture_margin_left = 16.0
+texture_margin_top = 16.0
+texture_margin_right = 16.0
+texture_margin_bottom = 20.0
+modulate_color = Color(0.3, 0.78, 0.42, 1)
+
+[sub_resource type="StyleBoxTexture" id="StyleBox_options_pressed"]
+texture = ExtResource("10_yptex")
+texture_margin_left = 16.0
+texture_margin_top = 16.0
+texture_margin_right = 16.0
+texture_margin_bottom = 16.0
+modulate_color = Color(0.3, 0.78, 0.42, 1)
 
 [node name="MainMenu" type="Control" unique_id=1390836826]
 layout_mode = 3
@@ -52,9 +70,9 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -20.0
-offset_top = 83.0
+offset_top = 40.0
 offset_right = 20.0
-offset_bottom = 123.0
+offset_bottom = 80.0
 grow_horizontal = 2
 
 [node name="TextureRect" type="TextureRect" parent="MenuHub/Control/Control" unique_id=970866285]
@@ -70,7 +88,7 @@ offset_right = 540.0
 offset_bottom = 540.0
 grow_horizontal = 2
 grow_vertical = 2
-scale = Vector2(0.3, 0.3)
+scale = Vector2(0.27, 0.27)
 pivot_offset = Vector2(540, 540)
 texture = ExtResource("3_bqsmv")
 expand_mode = 1
@@ -90,29 +108,39 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -147.0
-offset_top = -59.0
-offset_right = 148.0
-offset_bottom = 284.0
+offset_left = -130.0
+offset_top = -30.0
+offset_right = 130.0
+offset_bottom = 194.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 40
+theme_override_constants/separation = 16
 
 [node name="PlayButton" type="Button" parent="MenuHub/Control2/Control/VBoxContainer" unique_id=1950060514]
-custom_minimum_size = Vector2(50, 100)
+custom_minimum_size = Vector2(50, 64)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_10548")
-theme_override_font_sizes/font_size = 35
+theme_override_font_sizes/font_size = 28
 theme_override_styles/normal = ExtResource("5_ja60e")
 theme_override_styles/pressed = ExtResource("6_auexh")
 theme_override_styles/hover = ExtResource("5_ja60e")
 text = "Enter Battle"
 
-[node name="QuitButton" type="Button" parent="MenuHub/Control2/Control/VBoxContainer" unique_id=1724073309]
-custom_minimum_size = Vector2(50, 100)
+[node name="OptionsButton" type="Button" parent="MenuHub/Control2/Control/VBoxContainer"]
+custom_minimum_size = Vector2(50, 64)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_10548")
-theme_override_font_sizes/font_size = 35
+theme_override_font_sizes/font_size = 28
+theme_override_styles/normal = SubResource("StyleBox_options")
+theme_override_styles/pressed = SubResource("StyleBox_options_pressed")
+theme_override_styles/hover = SubResource("StyleBox_options")
+text = "Options"
+
+[node name="QuitButton" type="Button" parent="MenuHub/Control2/Control/VBoxContainer" unique_id=1724073309]
+custom_minimum_size = Vector2(50, 64)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_10548")
+theme_override_font_sizes/font_size = 28
 theme_override_styles/normal = ExtResource("7_lp0kt")
 theme_override_styles/pressed = ExtResource("8_m71po")
 theme_override_styles/hover = ExtResource("7_lp0kt")
@@ -123,5 +151,6 @@ visible = false
 layout_mode = 1
 
 [connection signal="pressed" from="MenuHub/Control2/Control/VBoxContainer/PlayButton" to="." method="_on_play_button_pressed"]
+[connection signal="pressed" from="MenuHub/Control2/Control/VBoxContainer/OptionsButton" to="." method="_on_options_button_pressed"]
 [connection signal="pressed" from="MenuHub/Control2/Control/VBoxContainer/QuitButton" to="." method="_on_quit_button_pressed"]
 [connection signal="back_to_main_menu" from="LobbyScene" to="." method="_on_lobby_scene_back_to_main_menu"]

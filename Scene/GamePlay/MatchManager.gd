@@ -102,7 +102,11 @@ func _init_stats() -> void:
 
 func _on_play_time(time: int) -> void:
 	if not multiplayer.is_server() or not _running: return
-	sync_stats.rpc(stats)
+	# Once a second, and only if something changed (damage, kills...) since the last send
+	var h := stats.hash()
+	if h != _last_stats_hash:
+		_last_stats_hash = h
+		sync_stats.rpc(stats)
 	# Everyone levels up a little just by playing
 	for hero in hero_spawner.player_list.values():
 		if is_instance_valid(hero):
@@ -326,6 +330,9 @@ func sync_scores(left: int, right: int) -> void:
 	scores = [left, right]
 	scores_changed.emit(left, right)
 
+
+## Server: hash of the stats last sent (sync_stats is skipped while nothing changes)
+var _last_stats_hash := 0
 
 @rpc("authority", "call_local", "reliable")
 func sync_stats(new_stats: Dictionary) -> void:

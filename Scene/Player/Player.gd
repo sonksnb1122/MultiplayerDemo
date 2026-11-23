@@ -40,7 +40,7 @@ var current_animation: String
 var camera: Node
 
 @onready var hero_spawner = get_parent()
-@onready var hp_bar = $SubViewport/hpBar
+@onready var hp_bar: HpBar3D = $HpBar3D
 @onready var dmg_label_pos = $dmg_label_pos
 var dmg_label = preload("res://Scene/Player/TakeDmgLabel.tscn")
 var player_hp_bar = preload("res://Resources/GUI/PlayerHPBar.tres")
@@ -164,6 +164,7 @@ func _enter_tree() -> void:
 			camera.follow(self)  # camera stays locked on my hero
 		player_HUD = $CanvasLayer/player_details
 		player_HUD.update_character_data_details(character_data)
+		player_HUD.add_auto_button(self)
 	else:
 		$CanvasLayer.queue_free()
 	$character.finished_attack.connect(perform_attack)
@@ -291,11 +292,9 @@ func shoot_ray_cast():
 		if coll is Player and is_enemy(coll):
 			hero_clicked.rpc_id(GameDefines.HOST_ID, coll.peer_id)
 
-## The hp bar is drawn in a SubViewport: render it only when it changed instead of every frame
+## The hp bar (HpBar3D) redraws itself when its value changes: nothing to do any more
 func _refresh_hp_bar() -> void:
-	var vp := hp_bar.get_parent() as SubViewport
-	if vp != null:
-		vp.render_target_update_mode = SubViewport.UPDATE_ONCE
+	pass
 
 func set_hp_bar_texture() -> void:
 	var player_id = multiplayer.get_unique_id()
@@ -558,6 +557,8 @@ func move_input(dir: Vector2) -> void:
 	_move_dir = dir.normalized() if dir.length() > 0.01 else Vector2.ZERO
 	if is_dead(): return
 	if _move_dir != Vector2.ZERO:
+		# Moving by hand takes the control back from auto play
+		_set_auto(false)
 		# Walking cancels the attack order
 		target_attack = null
 		_clear_path()
@@ -920,6 +921,48 @@ func hero_clicked(peer_id_object_clicked: int):
 		target_position = hero_is_clicked.position
 		_set_order(PlayerState.MOVING)
 
+# --- AUTO PLAY ---
+
+## Owner: the hero plays by itself (the same AI as the bots, same difficulty)
+signal auto_changed(on: bool)
+var auto_enabled := false
+## Server: the AI playing this hero while auto is on
+var _auto_brain: BotBrain = null
+
+@rpc("any_peer", "call_local", "reliable")
+func request_auto(on: bool) -> void:
+	if not multiplayer.is_server(): return
+	if not _is_sender_owner("request_auto"): return
+	_set_auto(on)
+
+## Server: start / stop the AI for this (human) hero and tell its owner
+func _set_auto(on: bool) -> void:
+	if peer_id < 0 or on == (_auto_brain != null): return
+	if on:
+		_auto_brain = BotBrain.new()
+		_auto_brain.name = "AutoBrain"
+		add_child(_auto_brain)
+	else:
+		_auto_brain.queue_free()
+		_auto_brain = null
+		# Stop what the AI was doing
+		target_attack = null
+		_clear_path()
+		if player_state == PlayerState.MOVING or player_state == PlayerState.ATTACK:
+			player_state = PlayerState.IDLE
+			velocity.x = 0.0
+			velocity.z = 0.0
+			_send_animation("idle")
+	if peer_id == multiplayer.get_unique_id():
+		sync_auto(on)
+	else:
+		sync_auto.rpc_id(peer_id, on)
+
+@rpc("authority", "call_remote", "reliable")
+func sync_auto(on: bool) -> void:
+	auto_enabled = on
+	auto_changed.emit(on)
+
 ## Server: walk to [param point] along the navigation path (bot AI)
 func order_move(point: Vector3) -> void:
 	if not multiplayer.is_server() or is_dead(): return
@@ -1064,11 +1107,35 @@ func _is_sender_owner(rpc_name: String) -> bool:
 		return false
 	return true
 
+## Floating numbers are reused (a few per hero) instead of a new node for every hit
+const DMG_LABEL_POOL := 8
+var _dmg_labels: Array = []
+## Holder of the labels: _apply_visibility shows / hides the holder, never the labels
+## themselves (a finished label must stay hidden until it is used again)
+var _dmg_holder: Node3D
+
 func show_take_damage_label(dmg: int, kind := DamageKind.BASIC):
-	var label = dmg_label.instantiate()
-	add_child(label)
-	label.position = dmg_label_pos.position
-	label.set_dmg(dmg, kind)
+	var label = null
+	for l in _dmg_labels:
+		if is_instance_valid(l) and not l.visible:
+			label = l
+			break
+	if label == null:
+		if _dmg_labels.size() < DMG_LABEL_POOL:
+			if _dmg_holder == null:
+				_dmg_holder = Node3D.new()
+				_dmg_holder.name = "DamageLabels"
+				add_child(_dmg_holder)
+				_dmg_holder.visible = current_hp > 0 and not is_hidden_locally
+			label = dmg_label.instantiate()
+			label.pooled = true
+			_dmg_holder.add_child(label)
+			_dmg_labels.append(label)
+		else:
+			# All busy: take the oldest one
+			label = _dmg_labels.pop_front()
+			_dmg_labels.append(label)
+	label.set_dmg(dmg, kind, dmg_label_pos.position)
 
 @rpc("authority", "call_local", "reliable")
 func play_melee_sound() -> void:

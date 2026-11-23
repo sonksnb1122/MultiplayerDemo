@@ -67,6 +67,7 @@ static func play_ui(tree: SceneTree, sound: String, volume_db := 0.0) -> void:
 	if tree == null or tree.root == null or not SOUNDS.has(sound):
 		return
 	var p := AudioStreamPlayer.new()
+	p.bus = GraphicsSettings.SFX_BUS
 	p.stream = _pick(SOUNDS[sound])
 	p.volume_db = volume_db
 	tree.root.add_child(p)
@@ -74,16 +75,41 @@ static func play_ui(tree: SceneTree, sound: String, volume_db := 0.0) -> void:
 	p.play()
 
 
+## 3D players are reused (a pool in the current scene) instead of one new node per sound:
+## footsteps and hits play many sounds a second. When all are busy the oldest one is cut.
+const POOL_3D_MAX := 24
+static var _pool_3d: Array = []
+
+
 static func _play_stream_3d(tree: SceneTree, stream: AudioStream, world_position: Vector3, volume_db: float, pitch_random: float) -> void:
 	if tree == null or tree.current_scene == null:
 		return
-	var p := AudioStreamPlayer3D.new()
+	var p := _free_player_3d(tree.current_scene)
 	p.stream = stream
 	p.volume_db = volume_db
-	p.unit_size = 30.0
-	p.max_distance = 90.0
 	p.pitch_scale = 1.0 + randf_range(-pitch_random, pitch_random)
-	tree.current_scene.add_child(p)
 	p.global_position = world_position
-	p.finished.connect(p.queue_free)
 	p.play()
+
+
+static func _free_player_3d(scene: Node) -> AudioStreamPlayer3D:
+	for i in range(_pool_3d.size() - 1, -1, -1):
+		var player = _pool_3d[i]
+		# Players of a previous scene were freed with it
+		if not is_instance_valid(player) or player.get_parent() != scene:
+			_pool_3d.remove_at(i)
+			continue
+		if not player.playing:
+			return player
+	if _pool_3d.size() < POOL_3D_MAX:
+		var p := AudioStreamPlayer3D.new()
+		p.bus = GraphicsSettings.SFX_BUS
+		p.unit_size = 30.0
+		p.max_distance = 90.0
+		scene.add_child(p)
+		_pool_3d.append(p)
+		return p
+	var oldest: AudioStreamPlayer3D = _pool_3d.pop_front()
+	_pool_3d.append(oldest)
+	oldest.stop()
+	return oldest

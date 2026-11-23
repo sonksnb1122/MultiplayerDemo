@@ -70,9 +70,10 @@ static func _orb(values: Dictionary) -> Dictionary:
 
 
 static func _tornado(values: Dictionary) -> Dictionary:
+	# Quicker to cast and gone sooner than before
 	var base := {
-		"kind": SkillData.Kind.AREA_AT_TARGET, "cast_range": 12.0, "cast_time": 0.4, "impact_delay": 0.25,
-		"radius": 2.5, "vfx_lifetime": 2.0,
+		"kind": SkillData.Kind.AREA_AT_TARGET, "cast_range": 12.0, "cast_time": 0.25, "impact_delay": 0.15,
+		"radius": 2.5, "vfx_scale": 1.34, "vfx_lifetime": 1.2,
 	}
 	base.merge(values, true)
 	return base
@@ -137,7 +138,7 @@ static func _table() -> Dictionary:
 				"description": "ULTIMATE. A huge storm (6m radius): 4 waves, each deals 10 damage and stuns for 0.6s.",
 				"kind": SkillData.Kind.AREA_AT_POINT, "cooldown": 45.0, "cast_range": 13.0, "cast_time": 0.5,
 				"impact_delay": 0.35, "radius": 6.0, "hits": 4, "hit_interval": 0.5, "bonus_damage": 10,
-				"stun_duration": 0.6, "vfx_scene": TORNADO_BLUE, "vfx_scale": 2.2, "vfx_lifetime": 2.2},
+				"stun_duration": 0.6, "vfx_scene": TORNADO_BLUE, "vfx_scale": 1.46, "vfx_lifetime": 2.2},
 		],
 		ROGUE: [
 			_orb({"id": "rogue_red", "icon": ICONS + "grenade_red.png", "display_name": "Inferno Orb", "color": Color(1.0, 0.3, 0.1),

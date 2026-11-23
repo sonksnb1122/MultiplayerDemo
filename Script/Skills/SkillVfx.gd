@@ -6,6 +6,11 @@ extends RefCounted
 ## - Anything else (tornado): scaled in and out with a tween.
 
 static var _cache: Dictionary = {}
+## Resized particle quads, shared between casts (see _scale_aligned_particles)
+static var _scaled_quads: Dictionary = {}
+## Dynamic lights from effects at the same time: each one costs every lit object near it
+## (the Mobile renderer draws them per object). Extra effects simply come without their light.
+const MAX_VFX_LIGHTS := 4
 
 
 static func load_scene(path: String) -> PackedScene:
@@ -28,6 +33,10 @@ static func instantiate(path: String, scale_value: float, hue_shift := 0.0) -> N
 	if fx == null:
 		return null
 	_disable_shadows(fx)
+	for node in fx.find_children("*", "AudioStreamPlayer3D", true, false):
+		(node as AudioStreamPlayer3D).bus = GraphicsSettings.SFX_BUS
+	if GraphicsSettings.low_quality:
+		_low_quality(fx)
 	var ember := fx as EmbersetEffect
 	if ember != null:
 		ember.size = scale_value
@@ -50,6 +59,36 @@ static func _disable_shadows(fx: Node) -> void:
 		(node as Light3D).shadow_enabled = false
 
 
+## Low graphics (F8): no dynamic light from the effect, half the particles
+static func _low_quality(fx: Node) -> void:
+	for node in fx.find_children("*", "Light3D", true, false):
+		(node as Light3D).visible = false
+	for node in fx.find_children("*", "GPUParticles3D", true, false):
+		var particles := node as GPUParticles3D
+		particles.amount_ratio = 0.5
+		# Simulated at 30 steps a second (drawn smoothly, interpolated)
+		if particles.fixed_fps > 30:
+			particles.fixed_fps = 30
+			particles.interpolate = true
+
+
+## At most MAX_VFX_LIGHTS effect lights at once (group "vfx_light"; freed lights leave it)
+static func _limit_lights(fx: Node3D) -> void:
+	var tree := fx.get_tree()
+	if tree == null:
+		return
+	var active := tree.get_nodes_in_group("vfx_light").size()
+	for node in fx.find_children("*", "Light3D", true, false):
+		var light := node as Light3D
+		if not light.visible:
+			continue
+		if active >= MAX_VFX_LIGHTS:
+			light.visible = false
+		else:
+			light.add_to_group("vfx_light")
+			active += 1
+
+
 ## Particles with a transform_align mode rebuild their own rotation, which drops the node scale:
 ## their quads keep the original size while everything else grows. Resize those quads to match.
 static func _scale_aligned_particles(fx: Node, scale_value: float) -> void:
@@ -62,9 +101,13 @@ static func _scale_aligned_particles(fx: Node, scale_value: float) -> void:
 		var quad := particles.draw_pass_1 as QuadMesh
 		if quad == null:
 			continue
-		quad = quad.duplicate() as QuadMesh
-		quad.size *= scale_value
-		particles.draw_pass_1 = quad
+		# One resized copy per (quad, size), shared by every cast instead of a new mesh each time
+		var key := "%d:%.3f" % [quad.get_instance_id(), scale_value]
+		if not _scaled_quads.has(key):
+			var copy := quad.duplicate() as QuadMesh
+			copy.size *= scale_value
+			_scaled_quads[key] = copy
+		particles.draw_pass_1 = _scaled_quads[key]
 
 
 ## Spawns a VFX as a child of [param parent] (follows it). Looping VFX stay until [method stop_and_free].
@@ -140,6 +183,7 @@ static func stop_and_free(fx: Node3D) -> void:
 
 
 static func _start(fx: Node3D) -> void:
+	_limit_lights(fx)
 	# Emberset effects autoplay on enter tree; Binbun Vol2 emitters need open().
 	if not (fx is EmbersetEffect) and fx.has_method("open"):
 		fx.call("open")

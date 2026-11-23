@@ -19,6 +19,13 @@ const PLAY_ICON := preload("res://Asset/Art/Branding/btn_play.png")
 func _ready() -> void:
 	root.visible = false
 	is_open = false
+	# Options (graphics / sound): same look as the Exit button, no copied signals
+	var options := exit_button.duplicate(Node.DUPLICATE_GROUPS | Node.DUPLICATE_SCRIPTS | Node.DUPLICATE_USE_INSTANTIATION) as Button
+	options.name = "OptionsButton"
+	options.text = "Options"
+	exit_button.get_parent().add_child(options)
+	exit_button.get_parent().move_child(options, exit_button.get_index())
+	options.pressed.connect(func() -> void: OptionsMenu.open(get_tree()))
 	exit_button.pressed.connect(_on_exit_button_pressed)
 	quit_button.pressed.connect(_on_quit_button_pressed)
 	pause_button.pressed.connect(toggle)
@@ -33,6 +40,8 @@ func _exit_tree() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if OptionsMenu.is_open(get_tree()):
+		return
 	if event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
 		toggle()
