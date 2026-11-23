@@ -1,14 +1,26 @@
 class_name CameraController
 extends Camera3D
 
-@onready var game_play = get_parent()
+## Camera looks down at 45 degrees, about 21.2 units from the ground point it aims at
+## (the y in GamePlay.tscn is the height: 21.2 * sin 45 = 15). It is always locked on
+## the local player's hero; FOCUS_DISTANCE is how far behind the hero it stands
+## (15 would put the hero exactly in the middle, less keeps it a bit below the middle).
+const HEIGHT := 15.0
+const FOCUS_DISTANCE := 10.0
 
-var drag_active = false
+## The local player's hero the camera follows (set by Player.gd through follow())
+var _target: Node3D = null
 
 # Shake (h/v offsets, so it doesn't fight with the camera position)
 var _shake_strength := 0.0
 var _shake_time := 0.0
 var _shake_left := 0.0
+
+
+## Lock the camera on [param hero] (the local player's hero)
+func follow(hero: Node3D) -> void:
+	_target = hero
+	focus_to_me(hero.global_position)
 
 
 ## [param strength] in world units, fades out over [param duration] seconds
@@ -21,6 +33,12 @@ func shake(strength: float, duration: float) -> void:
 
 
 func _process(delta: float) -> void:
+	if is_instance_valid(_target):
+		focus_to_me(_target.global_position)
+	_update_shake(delta)
+
+
+func _update_shake(delta: float) -> void:
 	if _shake_left <= 0.0:
 		return
 	_shake_left -= delta
@@ -32,27 +50,8 @@ func _process(delta: float) -> void:
 	h_offset = randf_range(-k, k)
 	v_offset = randf_range(-k, k)
 
-func _input(event: InputEvent) -> void:
-	if PauseMenu.is_open:
-		drag_active = false
-		return
-	if game_play.game_started:
-		#process camera zoom in, zoom out
-		if event.is_action("CameraZoomIn"):
-			if fov < GameDefines.ZOOM_MAX :
-				fov += GameDefines.ZOOM_STEP
-		if event.is_action("CameraZoomOut"):
-			if fov > GameDefines.ZOOM_MIN :
-				fov -= GameDefines.ZOOM_STEP
-		#process move camera by mouse
-		if event is InputEventMouseButton:
-			if event.button_index == MOUSE_BUTTON_LEFT || event.button_index == MOUSE_BUTTON_MIDDLE:
-				drag_active = event.pressed
-		elif event is InputEventMouseMotion and drag_active:
-			global_position.x += -event.relative.x * GameDefines.CAMERA_SPEED
-			global_position.z += -event.relative.y * GameDefines.CAMERA_SPEED
+
 func focus_to_me(pos: Vector3):
-	var offset = 20.0
 	global_position.x = pos.x
-	#global_position.y = pos.y
-	global_position.z = pos.z + offset
+	global_position.y = HEIGHT
+	global_position.z = pos.z + FOCUS_DISTANCE

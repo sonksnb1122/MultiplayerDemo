@@ -137,7 +137,7 @@ func _enter_tree() -> void:
 	camera = get_tree().get_root().get_node("GamePlay").get_node("Camera3D")
 	if NetworkManager.is_mine(peer_id):
 		if camera is CameraController:
-			camera.focus_to_me(global_position)		
+			camera.follow(self)  # camera stays locked on my hero
 		player_HUD = $CanvasLayer/player_details
 		player_HUD.update_character_data_details(character_data)
 	else:
