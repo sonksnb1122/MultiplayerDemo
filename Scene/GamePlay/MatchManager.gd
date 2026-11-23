@@ -4,7 +4,7 @@ extends Node
 ##   - killing an enemy gives the team GameDefines.KILL_SCORE points (+ kill / death / assist stats)
 ##   - a team standing alone in the zone in the middle (King of the Hill) gets 1 point every
 ##     GameDefines.ZONE_TICK seconds; when both teams are inside it is contested
-##   - first team to GameDefines.SCORE_TO_WIN wins, otherwise the higher score when the time is up
+##   - first team to MatchSettings.score_to_win wins, otherwise the higher score when the time is up
 ##   - the respawn time grows with each death
 ##   - heroes gain XP (time, kills, assists) and level up (Player.add_xp)
 ##   - a rune (Haste / Power / Shield / Heal) appears at one of GameDefines.RUNE_SPOTS now and then
@@ -107,7 +107,7 @@ func _on_play_time(time: int) -> void:
 	for hero in hero_spawner.player_list.values():
 		if is_instance_valid(hero):
 			hero.add_xp(GameDefines.XP_PER_SECOND)
-	if time >= GameDefines.MATCH_DURATION:
+	if time >= MatchSettings.match_duration:
 		_end_match()
 
 
@@ -298,7 +298,7 @@ func _add_score(team: int, points: int) -> void:
 	if team < 0 or team > 1 or not _running: return
 	scores[team] += points
 	sync_scores.rpc(scores[0], scores[1])
-	if scores[team] >= GameDefines.SCORE_TO_WIN:
+	if scores[team] >= MatchSettings.score_to_win:
 		_end_match()
 
 
@@ -395,6 +395,7 @@ func _check_missing_players() -> void:
 	if not multiplayer.is_server(): return
 	var connected := multiplayer.get_peers()
 	for peer_id in game_play_network.hero_selection_status:
+		if int(peer_id) < 0: continue  # bots never connect
 		if peer_id != multiplayer.get_unique_id() and not connected.has(peer_id):
 			_hud.show_player_left(_player_name(peer_id))
 			return

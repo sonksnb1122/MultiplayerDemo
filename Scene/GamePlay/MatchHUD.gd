@@ -217,7 +217,7 @@ func _on_scores_changed(left: int, right: int) -> void:
 	var ally := left if mine == 0 else right
 	var enemy := right if mine == 0 else left
 	_score_label.text = "[center][color=#%s]%d[/color]  :  [color=#%s]%d[/color]   [font_size=14][color=#bbbbbb]/ %d[/color][/font_size][/center]" % [
-		COLOR_ALLY.to_html(false), ally, COLOR_ENEMY.to_html(false), enemy, GameDefines.SCORE_TO_WIN]
+		COLOR_ALLY.to_html(false), ally, COLOR_ENEMY.to_html(false), enemy, MatchSettings.score_to_win]
 
 
 func _update_zone_label() -> void:

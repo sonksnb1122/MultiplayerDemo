@@ -315,8 +315,11 @@ func _popup(text: String, color: Color, delay: float) -> void:
 	label.no_depth_test = true
 	label.render_priority = 10
 	label.outline_render_priority = 9
-	label.font_size = 240
-	label.outline_size = 54
+	# Same size as before (240 px * 0.005), but the glyphs are rendered 3x smaller: less memory
+	# and no hitch the first time a new word is drawn
+	label.pixel_size = 0.015
+	label.font_size = 80
+	label.outline_size = 18
 	label.modulate = Color(color, 0.0)
 	label.outline_modulate = Color(0, 0, 0, 0.0)
 	label.position = Vector3(0, POPUP_START_HEIGHT, 0)

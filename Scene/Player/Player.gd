@@ -122,6 +122,12 @@ var _path := PackedVector3Array()
 var _path_index := 0
 var _path_goal := Vector3.INF
 var _repath_timer := 0.0
+## Server: walking but hardly moving (pressed against a prop) -> repath and step sideways
+const STUCK_TIME := 0.25
+const UNSTICK_TIME := 0.35
+var _stuck_time := 0.0
+var _unstick_dir := Vector3.ZERO
+var _unstick_left := 0.0
 # client: position received from the server, drawn smoothly in _process
 var _net_target_pos := Vector3.ZERO
 var _has_net_target := false
@@ -140,6 +146,12 @@ func _ready() -> void:
 	respawn_timer.stop()
 	respawn_timer.one_shot = true
 	respawn_timer.timeout.connect(_on_timer_respawn_timeout)
+	
+	# A bot (negative peer id) is played by the server
+	if peer_id < 0 and multiplayer.is_server():
+		var brain := BotBrain.new()
+		brain.name = "BotBrain"
+		add_child(brain)
 	
 	on_ready.rpc_id(GameDefines.HOST_ID, peer_id)
 
@@ -575,14 +587,21 @@ func move_to_target(target: Vector3):
 		direction.y = 0.0
 		if direction.length() > 0.001:
 			direction = direction.normalized()
-			velocity.x = direction.x * speed
-			velocity.z = direction.z * speed
+			var walk := direction
+			if _unstick_left > 0.0:
+				# Side-step along the prop we bumped into, then back on the path
+				_unstick_left -= get_physics_process_delta_time()
+				walk = (_unstick_dir * 0.8 + direction * 0.2).normalized()
+			velocity.x = walk.x * speed
+			velocity.z = walk.z * speed
 			_send_direction(Vector3(waypoint.x, position.y, waypoint.z))
 		else:
 			velocity.x = move_toward(velocity.x, 0, speed)
 			velocity.z = move_toward(velocity.z, 0, speed)
 		_send_animation("moving")
+		var before := global_position
 		move_and_slide()
+		_check_stuck(before, direction, speed)
 	else:
 		_clear_path()
 		_send_animation("idle")
@@ -590,6 +609,37 @@ func move_to_target(target: Vector3):
 
 func _flat_distance(a: Vector3, b: Vector3) -> float:
 	return Vector2(a.x - b.x, a.z - b.z).length()
+
+## Server: moved much less than it should (pushed against a prop corner / another hero) for a
+## moment -> ask for a fresh path and walk along the obstacle for a short while
+func _check_stuck(before: Vector3, direction: Vector3, speed: float) -> void:
+	var dt := get_physics_process_delta_time()
+	var moved := _flat_distance(before, global_position)
+	if moved < speed * dt * 0.3:
+		_stuck_time += dt
+	else:
+		_stuck_time = maxf(_stuck_time - dt, 0.0)
+	if _stuck_time < STUCK_TIME:
+		return
+	_stuck_time = 0.0
+	_repath_timer = 0.0
+	_path = PackedVector3Array()
+	# Along the surface we hit, on the side closer to where we want to go
+	var normal := Vector3.ZERO
+	var hit := get_last_slide_collision()
+	if hit != null:
+		normal = hit.get_normal()
+	normal.y = 0.0
+	if normal.length() < 0.1:
+		normal = -direction
+	normal = normal.normalized()
+	var side := Vector3(-normal.z, 0.0, normal.x)
+	if side.dot(direction) < 0.0:
+		side = -side
+	if side.length() < 0.1:
+		side = Vector3(-direction.z, 0.0, direction.x)
+	_unstick_dir = side.normalized()
+	_unstick_left = UNSTICK_TIME
 
 func _clear_path() -> void:
 	_path = PackedVector3Array()
@@ -641,16 +691,12 @@ func _sync_transform_to_clients(delta: float) -> void:
 	# Before the match starts the clients may not have spawned this hero yet: position travels on
 	# channel 1, so it could arrive before spawn_heros_to_tree (channel 0) -> "Node not found".
 	if not hero_spawner.is_game_started(): return
-	_pos_send_timer += delta
+	# The positions of all heroes go out together, in one small packet (HeroSpawner.sync_positions);
+	# here only the facing is repeated now and then, in case a direction packet was lost
 	_heartbeat_timer += delta
-	var heartbeat := _heartbeat_timer >= SYNC_HEARTBEAT
-	var moved := global_position.distance_squared_to(_last_sent_pos) > 0.0001
-	if heartbeat or (moved and _pos_send_timer >= 1.0 / POSITION_SEND_RATE):
-		_pos_send_timer = 0.0
+	if _heartbeat_timer >= SYNC_HEARTBEAT:
 		_heartbeat_timer = 0.0
-		_last_sent_pos = global_position
-		set_object_position.rpc(peer_id, global_position)
-		if heartbeat and _last_sent_dir != Vector3.ZERO:
+		if _last_sent_dir != Vector3.ZERO:
 			set_object_direction.rpc(peer_id, global_position + _last_sent_dir)
 
 # --- CLIENT SMOOTHING ---
@@ -727,7 +773,10 @@ func set_object_position(object_target_peer_id: int, new_position: Vector3):
 	if multiplayer.is_server():
 		global_position = new_position
 		return
-	# Client: _process glides toward it; big jumps (spawn, respawn) snap at once
+	apply_net_position(new_position)
+
+## Client: position from the server; _process glides toward it, big jumps (spawn, respawn) snap
+func apply_net_position(new_position: Vector3) -> void:
 	_net_target_pos = new_position
 	if not _has_net_target or global_position.distance_to(new_position) > CLIENT_SNAP_DISTANCE:
 		global_position = new_position
@@ -870,6 +919,25 @@ func hero_clicked(peer_id_object_clicked: int):
 	else:
 		target_position = hero_is_clicked.position
 		_set_order(PlayerState.MOVING)
+
+## Server: walk to [param point] along the navigation path (bot AI)
+func order_move(point: Vector3) -> void:
+	if not multiplayer.is_server() or is_dead(): return
+	_move_dir = Vector2.ZERO
+	target_attack = null
+	target_position = Vector3(point.x, 0.0, point.z)
+	_clear_path()
+	_last_sent_dir = Vector3.ZERO
+	_set_order(PlayerState.MOVING)
+
+## Server: chase and basic-attack [param target] (bot AI)
+func order_attack(target: Player) -> void:
+	if not multiplayer.is_server() or is_dead(): return
+	if target == null or not is_instance_valid(target) or target.is_dead() or not is_enemy(target): return
+	_move_dir = Vector2.ZERO
+	target_attack = target
+	target_position = target.position
+	_set_order(PlayerState.ATTACK)
 
 # A new move/attack order given while a skill is being cast runs once the cast ends
 func _set_order(new_state) -> void:

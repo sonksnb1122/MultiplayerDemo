@@ -16,7 +16,8 @@ billboard = 1
 modulate = Color(1, 0.18431373, 0.31764707, 1)
 text = "-20"
 font = ExtResource("1_8h3f6")
-font_size = 300
-outline_size = 50
+pixel_size = 0.0156
+font_size = 96
+outline_size = 16
 
 [connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

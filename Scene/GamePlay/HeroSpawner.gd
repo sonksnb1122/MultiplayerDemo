@@ -12,6 +12,24 @@ var player_scene = preload("res://Scene/Player/Player.tscn")
 @onready var game_play = get_parent()
 
 var finished_spawned_all_player = false;
+## Server: bots (negative ids) were added to player_ready_list
+var _bots_ready := false
+## Server: players who told they have every hero in their scene (the match starts after
+## all of them, or after PEER_SPAWN_TIMEOUT seconds: otherwise the host's first updates for a
+## hero reach a client before that hero exists there -> "Node not found" errors)
+var _peers_spawned: Array[int] = []
+var _local_spawned := false
+var _wait_peers_left := 0.0
+const PEER_SPAWN_TIMEOUT := 5.0
+
+## Server: positions of every hero that moved, POSITION_SEND_RATE times a second, in ONE packet
+## (instead of one packet per hero); every hero is re-sent each POSITION_HEARTBEAT seconds
+## in case a packet was lost.
+const POSITION_SEND_RATE := 30.0
+const POSITION_HEARTBEAT := 0.5
+var _pos_timer := 0.0
+var _pos_heartbeat := 0.0
+var _last_sent_pos := {}
 var timer_force_spawn: Timer
 
 # Loading: this peer tells the host it is ready only once the match assets are loaded
@@ -89,11 +107,27 @@ func _process(delta: float) -> void:
 		for player in player_list:
 			if player_list[player].is_entered_tree: number_hero_ready += 1
 		if number_hero_ready == game_play_network.hero_selection_status.size():
+			if not multiplayer.is_server():
+				report_spawned.rpc_id(GameDefines.HOST_ID)
+				all_player_spawned.emit()
+				finished_spawned_all_player = true
+			elif not _local_spawned:
+				_local_spawned = true
+				_wait_peers_left = PEER_SPAWN_TIMEOUT
+	if multiplayer.is_server() and _local_spawned and not finished_spawned_all_player:
+		_wait_peers_left -= delta
+		if _all_peers_spawned() or _wait_peers_left <= 0.0:
 			all_player_spawned.emit()
 			finished_spawned_all_player = true
 	
 	if not multiplayer.is_server(): return	
 	if not is_hero_chosed_result_setted(): return
+	# Bots have no peer to load anything: spawn them with the first player who is ready
+	if not _bots_ready and not player_ready_list.is_empty():
+		_bots_ready = true
+		for id in game_play_network.hero_selection_status:
+			if int(id) < 0 and not player_ready_list.has(int(id)):
+				player_ready_list.push_back(int(id))
 	# spawn hero for ready players
 	
 	var must_spawn_hero = false;
@@ -171,3 +205,62 @@ func on_ready():
 	
 	var peer_id_sender = multiplayer.get_remote_sender_id()
 	player_ready_list.push_back(peer_id_sender)
+
+
+## Server: every connected player in this match reported its heroes spawned
+func _all_peers_spawned() -> bool:
+	var connected := multiplayer.get_peers()
+	for id in game_play_network.hero_selection_status:
+		var pid := int(id)
+		if pid <= 0 or pid == multiplayer.get_unique_id() or not connected.has(pid):
+			continue
+		if not _peers_spawned.has(pid):
+			return false
+	return true
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func report_spawned() -> void:
+	if not multiplayer.is_server(): return
+	var sender := multiplayer.get_remote_sender_id()
+	if not _peers_spawned.has(sender):
+		_peers_spawned.append(sender)
+
+
+# --- POSITION SYNC ---
+
+func _physics_process(delta: float) -> void:
+	if not multiplayer.is_server() or not is_game_started():
+		return
+	_pos_timer += delta
+	_pos_heartbeat += delta
+	if _pos_timer < 1.0 / POSITION_SEND_RATE:
+		return
+	_pos_timer = 0.0
+	var heartbeat := _pos_heartbeat >= POSITION_HEARTBEAT
+	if heartbeat:
+		_pos_heartbeat = 0.0
+	var ids := PackedInt32Array()
+	var positions := PackedVector3Array()
+	for id in player_list:
+		var hero = player_list[id]
+		if not is_instance_valid(hero) or not hero.is_inside_tree():
+			continue
+		var pos: Vector3 = hero.global_position
+		var last: Vector3 = _last_sent_pos.get(id, Vector3.INF)
+		if heartbeat or last == Vector3.INF or pos.distance_squared_to(last) > 0.0001:
+			ids.append(int(id))
+			positions.append(pos)
+			_last_sent_pos[id] = pos
+	if not ids.is_empty():
+		sync_positions.rpc(ids, positions)
+
+
+## Channel 1, unreliable: a late packet is simply replaced by the next one, it never blocks the
+## reliable game events on channel 0. Heroes not spawned here yet are skipped (no error).
+@rpc("authority", "call_remote", "unreliable_ordered", 1)
+func sync_positions(ids: PackedInt32Array, positions: PackedVector3Array) -> void:
+	for i in mini(ids.size(), positions.size()):
+		var hero = player_list.get(ids[i])
+		if is_instance_valid(hero):
+			hero.apply_net_position(positions[i])

@@ -138,9 +138,11 @@ static func warm_up(camera: Camera3D, seconds := 0.6) -> void:
 		holder.add_child(_ball(look["color"], 1.0, true))
 		if look.has("core_color"):
 			holder.add_child(_ball(look["core_color"], 1.0, false))
+	var holder_ref: WeakRef = weakref(holder)  # gone already if the scene changed: no dead capture
 	camera.get_tree().create_timer(seconds).timeout.connect(func() -> void:
-		if is_instance_valid(holder):
-			holder.queue_free())
+		var node = holder_ref.get_ref()
+		if node != null:
+			node.queue_free())
 
 
 ## Small flash where the projectile lands

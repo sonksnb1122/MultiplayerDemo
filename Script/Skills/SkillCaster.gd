@@ -354,18 +354,26 @@ func request_cast(slot: int, target_peer: int, aim_point: Vector3) -> void:
 	if sender != player.peer_id:
 		push_warning("request_cast rejected: peer %d tried to cast for peer %d" % [sender, player.peer_id])
 		return
+	server_cast(slot, target_peer, aim_point)
+
+
+## Server: cast [param slot] for this hero if it can (used by request_cast and by the bot AI).
+## Returns false (and tells a human owner why) when it can't.
+func server_cast(slot: int, target_peer: int, aim_point: Vector3) -> bool:
+	if not multiplayer.is_server():
+		return false
 	if slot < 0 or slot >= skills.size() or MatchManager.is_over:
-		return
+		return false
 	var skill := skills[slot]
 	if not is_unlocked(slot):
 		_fail(slot, "Unlocks at level %d" % GameDefines.ULTIMATE_LEVEL)
-		return
+		return false
 	if _cooldown_left[slot] > 0.0:
 		_fail(slot, "Cooldown")
-		return
+		return false
 	if not player.can_cast():
 		_fail(slot, "Can't cast now")
-		return
+		return false
 
 	var target: Player = null
 	if skill.is_targeted():
@@ -373,10 +381,10 @@ func request_cast(slot: int, target_peer: int, aim_point: Vector3) -> void:
 		if target == null or not player.is_enemy(target) or target.is_dead() \
 				or Vision.is_hidden(target, player.team_side, player.hero_spawner.player_list.values()):
 			_fail(slot, "No target")
-			return
+			return false
 		if _flat_distance(target.global_position, player.global_position) > skill.cast_range + RANGE_TOLERANCE:
 			_fail(slot, "Out of range")
-			return
+			return false
 		# A targeted skill always goes at its target (e.g. Ground Blast toward the enemy)
 		aim_point = target.global_position
 
@@ -405,8 +413,10 @@ func request_cast(slot: int, target_peer: int, aim_point: Vector3) -> void:
 			_cast_line_shot(slot, skill, aim_point)
 
 	_cooldown_left[slot] = skill.cooldown
-	cooldown_started_rpc.rpc_id(player.peer_id, slot, skill.cooldown)
+	if player.peer_id > 0:  # bots (negative ids) have no player to tell
+		cooldown_started_rpc.rpc_id(player.peer_id, slot, skill.cooldown)
 	play_cast_sound.rpc(slot)
+	return true
 
 
 func _cast_projectile(slot: int, skill: SkillData, target: Player) -> void:
@@ -588,14 +598,33 @@ func _apply_to(target: Player, skill: SkillData) -> void:
 
 
 func _fail(slot: int, reason: String) -> void:
-	cast_failed_rpc.rpc_id(player.peer_id, slot, reason)
+	if player.peer_id > 0:  # a negative id is a bot (rpc_id(-N) would mean "everyone but N")
+		cast_failed_rpc.rpc_id(player.peer_id, slot, reason)
+
+
+## Server: seconds before [param slot] can be cast again (bot AI)
+func server_cooldown_left(slot: int) -> float:
+	return _cooldown_left[slot] if slot >= 0 and slot < _cooldown_left.size() else INF
 
 
 func _after(seconds: float, callback: Callable) -> void:
 	if seconds <= 0.0:
 		callback.call()
 		return
-	get_tree().create_timer(seconds).timeout.connect(callback)
+	_timer(seconds, callback)
+
+
+## A Timer child: freed with this hero, so a delayed effect never runs after the hero / the
+## match is gone (a SceneTree timer would call it with freed captures)
+func _timer(seconds: float, callback: Callable) -> void:
+	var t := Timer.new()
+	t.one_shot = true
+	t.wait_time = seconds
+	add_child(t)
+	t.timeout.connect(func() -> void:
+		t.queue_free()
+		callback.call())
+	t.start()
 
 
 func _enemies() -> Array[Player]:
@@ -776,7 +805,7 @@ func _after_visual(seconds: float, callback: Callable) -> void:
 	if seconds <= 0.0:
 		callback.call()
 		return
-	get_tree().create_timer(seconds).timeout.connect(callback)
+	_timer(seconds, callback)
 
 
 func _world() -> Node:

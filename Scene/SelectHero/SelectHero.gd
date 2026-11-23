@@ -55,6 +55,8 @@ func _on_hero_all_selection_updated(hero_all_selection: Dictionary):
 		else:
 			boss_avatar_list.add_child(player_hero_avatar)		
 		player_hero_avatar.set_hero_avatar_info(key, int(selection[GameDefines.HERO_ID]), selection[GameDefines.LOCKED])
+		if selection.get("Bot", false):
+			player_hero_avatar.update_avatar()  # bots have their hero locked in from the start
 	
 func _on_hero_selection_updated(peer_id: int, hero_selection: Dictionary):
 	update_hero_selection(peer_id, hero_selection)

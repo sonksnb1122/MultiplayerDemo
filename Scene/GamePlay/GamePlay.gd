@@ -33,7 +33,7 @@ func _on_heroes_status_updated(heroes_status: Dictionary):
 	
 func _on_play_time_trigged(time: int):
 	# Time left in the match
-	player_hud.set_timer_label(maxi(GameDefines.MATCH_DURATION - time, 0))
+	player_hud.set_timer_label(maxi(MatchSettings.match_duration - time, 0))
 
 func _on_server_disconnected() -> void:
 	get_tree().change_scene_to_file("res://Scene/MainMenu/MainMenu.tscn")

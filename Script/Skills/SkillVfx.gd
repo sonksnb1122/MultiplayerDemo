@@ -103,7 +103,11 @@ static func spawn_world(world: Node, path: String, world_position: Vector3, scal
 	_start(fx)
 	var self_freeing := ember != null and ember.one_shot
 	if lifetime > 0.0 and not self_freeing:
-		fx.get_tree().create_timer(lifetime).timeout.connect(func() -> void: stop_and_free(fx))
+		var fx_ref: WeakRef = weakref(fx)  # the effect may be freed first (scene change): no dead capture
+		fx.get_tree().create_timer(lifetime).timeout.connect(func() -> void:
+			var node = fx_ref.get_ref()
+			if node != null:
+				stop_and_free(node))
 	return fx
 
 
@@ -128,9 +132,11 @@ static func stop_and_free(fx: Node3D) -> void:
 	if delay <= 0.0:
 		fx.queue_free()
 		return
+	var fx_ref: WeakRef = weakref(fx)
 	fx.get_tree().create_timer(delay).timeout.connect(func() -> void:
-		if is_instance_valid(fx):
-			fx.queue_free())
+		var node = fx_ref.get_ref()
+		if node != null:
+			node.queue_free())
 
 
 static func _start(fx: Node3D) -> void:

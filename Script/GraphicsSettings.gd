@@ -5,10 +5,17 @@ extends Node
 ##   match (3D scenes) render normally.
 ## - F9 toggles "recording mode" for OBS: 30 FPS and the 3D scene drawn at a lower resolution
 ##   (UI stays sharp), which frees the GPU for OBS.
+## - F8 toggles "low graphics" (saved): no shadows, no glow and the 3D scene drawn at 75%
+##   resolution, for weak GPUs / laptops. UI stays sharp.
 
 const RECORDING_TOGGLE_KEY := KEY_F9
 const RECORDING_FPS := 30
 const RECORDING_3D_SCALE := 0.7
+const QUALITY_TOGGLE_KEY := KEY_F8
+const LOW_3D_SCALE := 0.75
+const SETTINGS_PATH := "user://graphics.cfg"
+
+var low_quality := false
 
 var recording_mode := false
 
@@ -23,6 +30,10 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_normal_fps = Engine.max_fps
 	_build_indicator()
+	var cfg := ConfigFile.new()
+	if cfg.load(SETTINGS_PATH) == OK:
+		low_quality = bool(cfg.get_value("graphics", "low_quality", false))
+	_apply_3d_scale()
 
 
 func _process(_delta: float) -> void:
@@ -31,6 +42,7 @@ func _process(_delta: float) -> void:
 		return
 	_last_scene = scene
 	OS.low_processor_usage_mode = scene != null and not (scene is Node3D)
+	_apply_quality(scene)
 
 
 func _input(event: InputEvent) -> void:
@@ -38,20 +50,58 @@ func _input(event: InputEvent) -> void:
 	if key != null and key.pressed and not key.echo and key.physical_keycode == RECORDING_TOGGLE_KEY:
 		set_recording_mode(not recording_mode)
 		get_viewport().set_input_as_handled()
+	elif key != null and key.pressed and not key.echo and key.physical_keycode == QUALITY_TOGGLE_KEY:
+		set_low_quality(not low_quality)
+		get_viewport().set_input_as_handled()
 
 
 func set_recording_mode(on: bool) -> void:
 	recording_mode = on
-	var vp := get_tree().root
-	if on:
-		Engine.max_fps = RECORDING_FPS
-		vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
-		vp.scaling_3d_scale = RECORDING_3D_SCALE
-	else:
-		Engine.max_fps = _normal_fps
-		vp.scaling_3d_scale = 1.0
+	Engine.max_fps = RECORDING_FPS if on else _normal_fps
+	_apply_3d_scale()
 	# Short notice only, so it doesn't end up in the recording
-	_indicator.text = "Recording mode: ON (30 FPS, F9 to turn off)" if on else "Recording mode: OFF"
+	_show_notice("Recording mode: ON (30 FPS, F9 to turn off)" if on else "Recording mode: OFF")
+
+
+func set_low_quality(on: bool) -> void:
+	low_quality = on
+	var cfg := ConfigFile.new()
+	cfg.set_value("graphics", "low_quality", on)
+	cfg.save(SETTINGS_PATH)
+	_apply_quality(get_tree().current_scene)
+	_show_notice("Low graphics: ON (F8 to turn off)" if on else "Low graphics: OFF")
+
+
+## 3D resolution: recording mode, else low graphics, else full
+func _apply_3d_scale() -> void:
+	var vp := get_tree().root
+	var s := RECORDING_3D_SCALE if recording_mode else (LOW_3D_SCALE if low_quality else 1.0)
+	vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
+	vp.scaling_3d_scale = s
+
+
+## Shadows of the sun light(s) and glow of the scene off in low graphics (the scene's own values
+## are kept in a meta, to put back exactly when it is turned off)
+func _apply_quality(scene: Node) -> void:
+	_apply_3d_scale()
+	if scene == null:
+		return
+	for node in scene.find_children("*", "DirectionalLight3D", true, false):
+		var light := node as DirectionalLight3D
+		if not light.has_meta("gs_shadow"):
+			light.set_meta("gs_shadow", light.shadow_enabled)
+		light.shadow_enabled = bool(light.get_meta("gs_shadow")) and not low_quality
+	for node in scene.find_children("*", "WorldEnvironment", true, false):
+		var env := (node as WorldEnvironment).environment
+		if env == null:
+			continue
+		if not env.has_meta("gs_glow"):
+			env.set_meta("gs_glow", env.glow_enabled)
+		env.glow_enabled = bool(env.get_meta("gs_glow")) and not low_quality
+
+
+func _show_notice(text: String) -> void:
+	_indicator.text = text
 	_indicator.visible = true
 	_indicator.modulate.a = 1.0
 	if _tween != null:

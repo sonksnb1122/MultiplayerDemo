@@ -3,6 +3,8 @@ extends Node
 signal players_updated(players: Dictionary)
 signal cool_down_trigged(cool_down: int)
 signal game_started
+## The host changed the match options (MatchSettings)
+signal settings_updated
 
 @onready var timer: Timer = $Timer
 
@@ -28,6 +30,9 @@ func _on_new_player_joined(peer_id: int, player_name: String):
 	
 	# Send exist players in room to new client
 	add_exist_players.rpc_id(peer_id, player_status)
+	# ... and the match options
+	if peer_id != GameDefines.HOST_ID:
+		sync_settings.rpc_id(peer_id, MatchSettings.to_dict())
 	
 	# Handle new player status
 	var is_ready = peer_id == GameDefines.HOST_ID
@@ -102,6 +107,8 @@ func can_start_game() -> bool:
 func try_start_game() -> bool:
 	if not multiplayer.is_server() || not can_start_game() || is_waiting_to_start: return false
 	BroadcastManager.stop_send_message()
+	# Everyone starts with the same options
+	sync_settings.rpc(MatchSettings.to_dict())
 	
 	is_waiting_to_start = true
 	remaining_time_to_start = GameDefines.COOL_DOWN_START_GAME
@@ -131,3 +138,19 @@ func show_cool_down(cool_down: int):
 func start_game():
 	print("start_game")
 	game_started.emit()
+
+
+# --- MATCH OPTIONS ---
+
+## Host: change the options and send them to everyone in the room
+func change_settings(values: Dictionary) -> void:
+	if not multiplayer.is_server() or is_waiting_to_start:
+		return
+	MatchSettings.apply(values)
+	sync_settings.rpc(MatchSettings.to_dict())
+
+
+@rpc("authority", "call_local", "reliable")
+func sync_settings(values: Dictionary) -> void:
+	MatchSettings.apply(values)
+	settings_updated.emit()

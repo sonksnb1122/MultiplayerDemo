@@ -107,6 +107,7 @@ func try_start_select() -> bool:
 	if not multiplayer.is_server():
 		return false	
 		
+	_add_bots()
 	remaining_time_to_start = GameDefines.LOBBY_TIME
 	show_count_down.rpc(remaining_time_to_start)
 	select_timer.wait_time = 1
@@ -136,3 +137,44 @@ func pending_start_game():
 func start_game():
 	print("start_game")
 	game_started.emit()
+
+
+# --- BOTS (server) ---
+
+## Fill each team up to MatchSettings.bot_team_size heroes with bots (ids -1, -2, ...), each
+## with a random hero already locked in. Clients get them with the other selections when they
+## open hero select (add_exist_selections).
+func _add_bots() -> void:
+	if MatchSettings.bot_team_size <= 0:
+		return
+	var count := [0, 0]
+	for id in LobbyNetworkManager.player_status:
+		var side := int(LobbyNetworkManager.player_status[id].get(GameDefines.TEAM_SIDE, GameDefines.TeamSide.LEFT))
+		count[clampi(side, 0, 1)] += 1
+	var heroes := CharacterDB.get_all_character()
+	if heroes.is_empty():
+		return
+	var used := [[], []]
+	var bot_id := -1
+	for side in [GameDefines.TeamSide.LEFT, GameDefines.TeamSide.RIGHT]:
+		while count[side] < MatchSettings.bot_team_size:
+			count[side] += 1
+			# A hero nobody else of this team bot-picked yet, if there is one
+			var choices: Array = []
+			for h in heroes:
+				if not used[side].has(h.id):
+					choices.append(h.id)
+			if choices.is_empty():
+				for h in heroes:
+					choices.append(h.id)
+			var hero_id: int = choices[randi() % choices.size()]
+			used[side].append(hero_id)
+			hero_selection_status[bot_id] = {
+				GameDefines.NAME: "Bot %d" % -bot_id,
+				GameDefines.TEAM_SIDE: side,
+				GameDefines.HERO_ID: hero_id,
+				GameDefines.LOCKED: true,
+				"Bot": true,
+			}
+			bot_id -= 1
+	hero_all_selection_updated.emit(hero_selection_status)
